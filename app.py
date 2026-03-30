@@ -4,15 +4,15 @@ import pandas as pd
 import time
 
 st.set_page_config(
-    page_title="AsinDiag · Amazon 运营诊断工具",
-    page_icon="📦",
+    page_title="Yurise.ai Â· Amazonåå®¶è¿è¥å·¥å·",
+    page_icon="ð",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
-# ─────────────────────────────────────────────────────────────
-# GLOBAL CSS  — dark, high-tech SaaS theme
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# GLOBAL CSS
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] { background:#0f172a !important; }
@@ -21,7 +21,32 @@ st.markdown("""
 footer { display:none !important; }
 .block-container { padding:0 !important; max-width:100% !important; }
 
-/* inputs */
+/* ââ Sidebar ââ */
+[data-testid="stSidebar"] {
+  background:rgba(10,17,35,0.98) !important;
+  border-right:1px solid rgba(71,85,105,0.35) !important;
+  min-width:190px !important; max-width:190px !important;
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] { padding:0; }
+[data-testid="stSidebarContent"] { padding:0 !important; }
+
+/* ââ Module section header ââ */
+.mod-header {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(30,41,59,0.55);
+  border-left:3px solid #3b82f6;
+  border-radius:0 10px 10px 0;
+  padding:10px 16px; margin-bottom:2px;
+}
+.mod-title {
+  font-size:13px; font-weight:700; color:#f1f5f9;
+  background:linear-gradient(90deg,#60a5fa,#a78bfa);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  letter-spacing:0.2px;
+}
+.mod-score { font-size:12px; font-weight:600; color:#94a3b8; }
+
+/* ââ inputs ââ */
 [data-testid="stTextInput"] input {
   background:#1e293b !important; color:#e2e8f0 !important;
   border:1px solid #475569 !important; border-radius:8px !important;
@@ -37,40 +62,37 @@ button[kind="primary"], .stButton > button {
 }
 .stButton > button:hover { background:#2563eb !important; }
 
-/* expanders */
+/* ââ expanders ââ */
 [data-testid="stExpander"] {
-  background:rgba(30,41,59,0.4) !important;
-  border:1px solid rgba(71,85,105,0.6) !important; border-radius:12px !important;
+  background:rgba(30,41,59,0.35) !important;
+  border:1px solid rgba(71,85,105,0.5) !important; border-radius:0 0 12px 12px !important;
+  border-top:none !important;
 }
-[data-testid="stExpander"] summary { color:#e2e8f0 !important; font-weight:600 !important; }
+[data-testid="stExpander"] summary { color:#94a3b8 !important; font-weight:500 !important; font-size:12px !important; }
 [data-testid="stExpander"] summary:hover { color:#93c5fd !important; }
 
-/* tabs */
+/* ââ tabs ââ */
 [data-testid="stTabs"] [role="tablist"] { background:#1e293b; border-radius:8px; padding:2px; border:1px solid #334155; }
 [data-testid="stTabs"] [role="tab"] { color:#94a3b8 !important; border-radius:6px; }
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] { background:#3b82f6 !important; color:white !important; }
 
-/* metrics */
+/* ââ metrics ââ */
 [data-testid="metric-container"] { background:rgba(30,41,59,0.5); border:1px solid rgba(71,85,105,0.6); border-radius:8px; padding:12px; }
 [data-testid="stMetricLabel"] { color:#94a3b8 !important; font-size:11px !important; }
 [data-testid="stMetricValue"] { color:#f1f5f9 !important; font-size:20px !important; }
-[data-testid="stMetricDelta"] { font-size:11px !important; }
 
-/* dataframe */
+/* ââ dataframe ââ */
 [data-testid="stDataFrame"] { background:#1e293b !important; border-radius:8px; overflow:hidden; }
-.stDataFrame thead tr th { background:#334155 !important; color:#94a3b8 !important; font-size:11px !important; font-weight:500 !important; }
-.stDataFrame tbody tr td { color:#cbd5e1 !important; font-size:12px !important; background:#1e293b !important; }
-.stDataFrame tbody tr:hover td { background:#263548 !important; }
 
-/* plotly dark */
+/* ââ plotly ââ */
 .js-plotly-plot .plotly .bg { fill:#0f172a !important; }
 
-/* scrollbar */
+/* ââ scrollbar ââ */
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background:#1e293b; }
 ::-webkit-scrollbar-thumb { background:#475569; border-radius:3px; }
 
-/* custom components */
+/* ââ cards ââ */
 .diag-topbar { background:rgba(15,23,42,0.97); border-bottom:1px solid rgba(71,85,105,0.6); padding:10px 24px; }
 .diag-card   { background:rgba(30,41,59,0.4); border:1px solid rgba(71,85,105,0.6); border-radius:12px; padding:16px; }
 .diag-label  { font-size:11px; color:#94a3b8; margin-bottom:3px; }
@@ -78,6 +100,7 @@ button[kind="primary"], .stButton > button {
 .diag-sub    { font-size:11px; color:#64748b; margin-top:2px; }
 .diag-highlight { border-color:rgba(245,158,11,0.5) !important; background:rgba(245,158,11,0.06) !important; }
 
+/* ââ badges ââ */
 .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; border-width:1px; border-style:solid; }
 .badge-excellent { background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(52,211,153,0.4); }
 .badge-good      { background:rgba(59,130,246,0.15); color:#60a5fa; border-color:rgba(96,165,250,0.4); }
@@ -89,34 +112,32 @@ button[kind="primary"], .stButton > button {
 .badge-warn      { background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(251,191,36,0.4); }
 .badge-abn       { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
 
+/* ââ judgment boxes ââ */
 .judge-warn { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:10px 14px; font-size:12px; color:#fcd34d; margin:10px 0; }
 .judge-info { background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:10px 14px; font-size:12px; color:#93c5fd; margin:10px 0; }
 
+/* ââ adv/dis cards ââ */
 .adv-card { background:rgba(16,185,129,0.06); border:1px solid rgba(52,211,153,0.25); border-radius:8px; padding:12px; }
 .dis-card { background:rgba(239,68,68,0.06); border:1px solid rgba(248,113,113,0.25); border-radius:8px; padding:12px; }
 .risk-box { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:10px 14px; font-size:12px; color:#fcd34d; }
 .prio-box { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.25); border-radius:8px; padding:10px 14px; font-size:12px; color:#93c5fd; }
 
+/* ââ action rows ââ */
 .action-row { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
 .action-icon { color:#60a5fa; margin-top:1px; flex-shrink:0; }
 
-.score-ring-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.score-num { font-size:28px; font-weight:800; }
-.score-label { font-size:10px; color:#64748b; }
-
-.p-card { background:rgba(30,41,59,0.4); border-radius:8px; padding:10px; }
-
+/* ââ tables ââ */
 .tbl-wrapper { overflow-x:auto; border-radius:8px; border:1px solid rgba(71,85,105,0.5); }
 table.dtbl { width:100%; border-collapse:collapse; font-size:12px; }
-table.dtbl th { background:rgba(51,65,85,0.6); color:#94a3b8; padding:8px 12px; text-align:left; font-weight:500; border-bottom:1px solid rgba(71,85,105,0.5); white-space:nowrap; }
+table.dtbl th { background:rgba(51,65,85,0.6); color:#94a3b8; padding:8px 12px; text-align:left; font-weight:500; border-bottom:1px solid rgba(71,85,105,0.5); white-space:nowraw; }
 table.dtbl td { padding:8px 12px; color:#cbd5e1; border-bottom:1px solid rgba(71,85,105,0.35); }
 table.dtbl tr:hover td { background:rgba(51,65,85,0.3); }
-table.dtbl .ours td { background:rgba(59,130,246,0.06); }
 .red-val { color:#f87171; font-weight:700; }
 .green-val { color:#34d399; font-weight:700; }
 .amber-val { color:#fbbf24; font-weight:700; }
 .blue-val { color:#60a5fa; }
 
+/* ââ plan cards ââ */
 .plan-card { border-radius:12px; padding:20px; }
 .plan-a { background:rgba(59,130,246,0.06); border:1px solid rgba(96,165,250,0.3); }
 .plan-b { background:rgba(16,185,129,0.06); border:1px solid rgba(52,211,153,0.3); }
@@ -124,32 +145,74 @@ table.dtbl .ours td { background:rgba(59,130,246,0.06); }
 .p1 { background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
 .p2 { background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(96,165,250,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
 
-hr.diag-divider { border:none; border-top:1px solid rgba(71,85,105,0.4); margin:12px 0; }
+/* ââ p-card ââ */
+.p-card { background:rgba(30,41,59,0.4); border-radius:8px; padding:10px; }
+
+/* ââ sidebar nav ââ */
+.nav-logo {
+  padding:18px 16px 12px 16px;
+  border-bottom:1px solid rgba(71,85,105,0.3);
+  margin-bottom:8px;
+}
+.nav-logo-name {
+  font-size:15px; font-weight:800; color:white; letter-spacing:-0.3px;
+  background:linear-gradient(90deg,#60a5fa,#a78bfa);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.nav-logo-sub { font-size:10px; color:#475569; margin-top:2px; }
+.nav-section { padding:4px 8px; margin:0 8px; }
+.nav-section-label { font-size:10px; color:#475569; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; padding:6px 8px 4px 8px; }
+.nav-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:8px; margin-bottom:2px;
+  cursor:pointer; text-decoration:none;
+  color:#94a3b8; font-size:12px; font-weight:500;
+  transition:all 0.15s;
+}
+.nav-item:hover { background:rgba(59,130,246,0.12); color:#93c5fd; text-decoration:none; }
+.nav-item-icon { font-size:14px; flex-shrink:0; }
+.nav-score-pill {
+  margin-left:auto; font-size:10px; font-weight:700;
+  padding:1px 6px; border-radius:10px;
+  background:rgba(51,65,85,0.6); color:#64748b;
+}
+.nav-divider { height:1px; background:rgba(71,85,105,0.25); margin:8px 16px; }
+
+/* ââ section anchor ââ */
+.sec-anchor { scroll-margin-top:10px; }
+
+/* ââ api fn code display ââ */
+.api-fn-wrap { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(71,85,105,0.4); }
+.api-fn {
+  font-family:monospace; font-size:10px; color:#60a5fa;
+  background:rgba(59,130,246,0.1); border:1px solid rgba(96,165,250,0.25);
+  padding:3px 9px; border-radius:5px;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MOCK DATA  — replace sections with real API calls
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MOCK DATA
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 MOCK = {
     "product": {
         "asin": "B0D54LVZK5",
-        "title": "SoundMax Pro X1 Portable Bluetooth Speaker, 360° Surround Sound, 24H Battery, IPX7 Waterproof, Dual Pairing, USB-C Charging",
+        "title": "SoundMax Pro X1 Portable Bluetooth Speaker, 360Â° Surround Sound, 24H Battery, IPX7 Waterproof, Dual Pairing, USB-C Charging",
         "brand": "SoundMax",
         "category": "Bluetooth Speakers",
         "price": 45.99, "rating": 4.2, "reviewCount": 1247,
         "inventoryStatus": "In Stock", "buyBoxStatus": "Won", "buyBoxWinRate": 94,
         "listingQualityScore": 72, "bsr": 247,
-        "features": ["IPX7 Waterproof","24H Battery","360° Sound","Dual Pairing","USB-C"],
+        "features": ["IPX7 Waterproof","24H Battery","360Â° Sound","Dual Pairing","USB-C"],
     },
     "scores": {"category":9,"brand":7,"competition":13,"keywords":14,"ads":14,"listing":10,"total":67},
     "scoreMeta": [
-        {"key":"category",    "label":"品类表现",     "max":15},
-        {"key":"brand",       "label":"品牌表现",     "max":10},
-        {"key":"competition", "label":"竞品竞争力",   "max":20},
-        {"key":"keywords",    "label":"关键词能力",   "max":20},
-        {"key":"ads",         "label":"广告效率",     "max":20},
-        {"key":"listing",     "label":"Listing&评论", "max":15},
+        {"key":"category",    "label":"åç±»è¡¨ç°",     "max":15},
+        {"key":"brand",       "label":"åçè¡¨ç°",     "max":10},
+        {"key":"competition", "label":"ç«åç«äºå",   "max":20},
+        {"key":"keywords",    "label":"å³é®è¯è½å",   "max":20},
+        {"key":"ads",         "label":"å¹¿åæç",     "max":20},
+        {"key":"listing",     "label":"Listing&è¯è®º", "max":15},
     ],
     "trend_dates":   ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"],
     "our_sales":     [42, 38, 45, 41, 37, 34, 33],
@@ -182,11 +245,11 @@ MOCK = {
         {"asin":"B09G9WV99B","brand":"Bose",    "price":89.00,"discount":0, "rating":4.6,"reviews":4120,  "sales":820,  "budget":"$2,100","lscore":93,"bsr":68,  "ours":False},
     ],
     "keywords": [
-        {"kw":"bluetooth speaker",          "vol":450000,"trend":"↑","org":18,"spn":5, "chg":-3,"cov":5,"opp":82,"status":"opp"},
-        {"kw":"portable bluetooth speaker", "vol":180000,"trend":"→","org":32,"spn":8, "chg":-2,"cov":5,"opp":74,"status":"opp"},
-        {"kw":"small bluetooth speaker",    "vol":85000, "trend":"↑","org":12,"spn":3, "chg": 2,"cov":4,"opp":88,"status":"good"},
-        {"kw":"waterproof bluetooth speaker","vol":120000,"trend":"↑","org":45,"spn":15,"chg":-5,"cov":5,"opp":65,"status":"risk"},
-        {"kw":"outdoor bluetooth speaker",  "vol":65000, "trend":"↑","org":22,"spn":6, "chg": 1,"cov":3,"opp":79,"status":"stable"},
+        {"kw":"bluetooth speaker",          "vol":450000,"trend":"â","org":18,"spn":5, "chg":-3,"cov":5,"opp":82,"status":"opp"},
+        {"kw":"portable bluetooth speaker", "vol":180000,"trend":"â","org":32,"spn":8, "chg":-2,"cov":5,"opp":74,"status":"opp"},
+        {"kw":"small bluetooth speaker",    "vol":85000, "trend":"â","org":12,"spn":3, "chg": 2,"cov":4,"opp":88,"status":"good"},
+        {"kw":"waterproof bluetooth speaker","vol":120000,"trend":"â","org":45,"spn":15,"chg":-5,"cov":5,"opp":65,"status":"risk"},
+        {"kw":"outdoor bluetooth speaker",  "vol":65000, "trend":"â","org":22,"spn":6, "chg": 1,"cov":3,"opp":79,"status":"stable"},
     ],
     "ads_summary": {"spend":2847,"impressions":145000,"clicks":3480,"ctr":2.4,"cvr":8.97,"cpc":0.82,"conv":312,"acos":28.5,"roas":3.51},
     "campaigns": [
@@ -205,46 +268,68 @@ MOCK = {
     ],
 }
 
-# ─────────────────────────────────────────────────────────────
-# HELPER FUNCTIONS
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# HELPERS
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def status_of(score):
-    if score >= 90: return "优秀"
-    if score >= 75: return "较好"
-    if score >= 60: return "正常"
-    return "异常"
+    if score >= 90: return "ä¼ç§"
+    if score >= 75: return "è¾å¥½"
+    if score >= 60: return "æ­£å¸¸"
+    return "å¼å¸¸"
 
 def badge_html(s):
     cls_map = {
-        "优秀":"badge-excellent","较好":"badge-good","正常":"badge-normal","异常":"badge-bad",
+        "ä¼ç§":"badge-excellent","è¾å¥½":"badge-good","æ­£å¸¸":"badge-normal","å¼å¸¸":"badge-bad",
         "opp":"badge-opp","good":"badge-excellent","stable":"badge-stable",
         "risk":"badge-risk","warn":"badge-warn","abn":"badge-abn",
     }
     label_map = {
-        "优秀":"优秀","较好":"较好","正常":"正常","异常":"异常",
-        "opp":"机会","good":"良好","stable":"稳定","risk":"风险","warn":"待优化","abn":"异常",
+        "ä¼ç§":"ä¼ç§","è¾å¥½":"è¾å¥½","æ­£å¸¸":"æ­£å¸¸","å¼å¸¸":"å¼å¸¸",
+        "opp":"æºä¼","good":"è¯å¥½","stable":"ç¨³å®","risk":"é£é©","warn":"å¾ä¼å","abn":"å¼å¸¸",
     }
     cls = cls_map.get(s, "badge-stable")
     label = label_map.get(s, s)
     return f'<span class="badge {cls}"><span style="width:6px;height:6px;border-radius:50%;display:inline-block;background:currentColor;opacity:.7"></span>{label}</span>'
 
-def metric_card(label, value, unit="", sub="", highlight=False):
-    hl = " diag-highlight" if highlight else ""
+def score_color(pct):
+    if pct >= 90: return "#34d399"
+    if pct >= 75: return "#60a5fa"
+    if pct >= 60: return "#fbbf24"
+    return "#f87171"
+
+def mod_header(icon, title, badge_key, score, max_score):
+    """Styled module section header with background + highlighted title."""
+    sc_pct = round(score / max_score * 100)
+    sc_clr = score_color(sc_pct)
+    badge = badge_html(badge_key)
     return f"""
-    <div class="diag-card{hl}" style="margin-bottom:0">
-      <div class="diag-label">{label}</div>
-      <div class="diag-val">{value}<span style="font-size:11px;color:#94a3b8;font-weight:400;margin-left:2px">{unit}</span></div>
-      {f'<div class="diag-sub">{sub}</div>' if sub else ''}
+    <div class="mod-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">{icon}</span>
+        <span class="mod-title">{title}</span>
+        {badge}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="mod-score">{score}/{max_score}ç</span>
+        <div style="width:60px;height:4px;background:#1e293b;border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:{sc_pct}%;background:{sc_clr};border-radius:2px"></div>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:{sc_clr}">{sc_pct}%</span>
+      </div>
     </div>"""
 
 def action_list(actions):
-    rows = "".join(f'<div class="action-row"><span class="action-icon">→</span><span style="font-size:12px;color:#cbd5e1">{a}</span></div>' for a in actions)
+    rows = "".join(
+        f'<div class="action-row"><span class="action-icon">â</span>'
+        f'<span style="font-size:12px;color:#cbd5e1">{a}</span></div>'
+        for a in actions
+    )
     return f'<div style="margin-top:8px">{rows}</div>'
 
 def judgment(text, t="warn"):
     cls = "judge-warn" if t == "warn" else "judge-info"
-    icon = "⚠" if t == "warn" else "ℹ"
+    icon = "â " if t == "warn" else "â¹"
     return f'<div class="{cls}">{icon}&nbsp; {text}</div>'
 
 def plotly_cfg():
@@ -263,33 +348,95 @@ def dark_layout(**kwargs):
     base.update(kwargs)
     return base
 
-def pct_color(v):
-    if v > 0: return "#34d399"
-    if v < 0: return "#f87171"
-    return "#94a3b8"
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# SIDEBAR  â  Elevator Navigation
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-# ─────────────────────────────────────────────────────────────
+def render_sidebar():
+    scores = MOCK["scores"]
+    nav_items = [
+        ("ð ", "æ¦è§æ»è§",   "sec-overview",   scores["total"],       100),
+        ("ð", "åç±»åæ",   "sec-category",   scores["category"],    15),
+        ("ð", "åçåæ",   "sec-brand",      scores["brand"],       10),
+        ("ð¯", "ç«ååæ",   "sec-competitor", scores["competition"], 20),
+        ("ð", "å³é®è¯åæ", "sec-keywords",   scores["keywords"],    20),
+        ("ð°", "å¹¿ååæ",   "sec-ads",        scores["ads"],         20),
+        ("ð", "30å¤©æ¹æ¡",   "sec-plan",       None,                  None),
+    ]
+
+    total = scores["total"]
+    overall = status_of(total)
+    c_map = {"ä¼ç§":"#34d399","è¾å¥½":"#60a5fa","æ­£å¸¸":"#fbbf24","å¼å¸¸":"#f87171"}
+    ring_clr = c_map[overall]
+
+    items_html = ""
+    for icon, label, anchor, sc, mx in nav_items:
+        pill = ""
+        if sc is not None and mx is not None:
+            pct = round(sc / mx * 100)
+            clr = score_color(pct)
+            pill = f'<span class="nav-score-pill" style="color:{clr};background:rgba(30,41,59,0.8)">{sc}/{mx}</span>'
+        items_html += f"""
+        <a class="nav-item" href="#{anchor}" style="text-decoration:none">
+          <span class="nav-item-icon">{icon}</span>
+          <span>{label}</span>
+          {pill}
+        </a>"""
+
+    with st.sidebar:
+        st.markdown(f"""
+        <div class="nav-logo">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="width:26px;height:26px;background:linear-gradient(135deg,#3b82f6,#7c3aed);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px">ð</div>
+            <div>
+              <div class="nav-logo-name">Yurise.ai</div>
+              <div class="nav-logo-sub">Amazonåå®¶è¿è¥å·¥å·</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(30,41,59,0.5);border:1px solid rgba(71,85,105,0.4);border-radius:8px;padding:8px 10px;margin-top:8px">
+            <div style="text-align:center">
+              <div style="font-size:22px;font-weight:800;color:{ring_clr};line-height:1">{total}</div>
+              <div style="font-size:9px;color:#475569">/100</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">ç»¼åå¥åº·å</div>
+              <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden">
+                <div style="height:100%;width:{total}%;background:{ring_clr};border-radius:2px"></div>
+            </div>
+                <div style="font-size:10px;color:{ring_clr};font-weight:600;margin-top:3px">{overall}</div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-section-label">æ¨¡åå¯¼èª</div>
+        {items_html}
+        <div class="nav-divider"></div>
+        <div style="padding:8px 18px;font-size:10px;color:#334155;line-height:1.6">
+          æ¨¡ææ°æ®æ¨¡å¼<br>å¯æ¿æ¢ä¸ºçå® API
+        </div>
+        """, unsafe_allow_html=True)
+
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 # TOP BAR
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_topbar():
     st.markdown("""
     <div class="diag-topbar" style="display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:20px;height:20px;background:#3b82f6;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px">📦</div>
-        <span style="font-size:14px;font-weight:800;color:white;letter-spacing:-0.3px">AsinDiag</span>
-        <span style="font-size:12px;color:#64748b">Amazon 卖家运营诊断工具</span>
+        <div style="width:22px;height:22px;background:linear-gradient(135deg,#3b82f6,#7c3aed);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px">ð</div>
+        <span style="font-size:15px;font-weight:800;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.3px">Yurise.ai</span>
+        <span style="font-size:12px;color:#64748b">Amazonåå®¶è¿è¥å·¥å·</span>
       </div>
       <span style="font-size:11px;color:#64748b">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-right:5px"></span>
-        模拟数据模式 · 可替换为真实 API 数据
+        æ¨¡ææ°æ®æ¨¡å¼ Â· å¯æ¿æ¢ä¸ºçå® API æ°æ®
       </span>
     </div>
     """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 # OVERVIEW
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_overview(asin):
     p = MOCK["product"]
@@ -297,12 +444,12 @@ def render_overview(asin):
     meta = MOCK["scoreMeta"]
     total = scores["total"]
     overall = status_of(total)
-    color_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+    color_map = {"ä¼ç§":"#34d399","è¾å¥½":"#60a5fa","æ­£å¸¸":"#fbbf24","å¼å¸¸":"#f87171"}
     ring_color = color_map[overall]
 
+    st.markdown('<div id="sec-overview" class="sec-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div style="padding:0 24px 0 24px">', unsafe_allow_html=True)
 
-    # Row 1: ASIN info + Health Score
     col_info, col_score = st.columns([7, 5])
 
     with col_info:
@@ -317,14 +464,14 @@ def render_overview(asin):
             {''.join([
               f'<div class="p-card"><div class="diag-label">{l}</div><div style="font-size:13px;font-weight:600;color:{c}">{v}</div></div>'
               for l,v,c in [
-                ("品牌",p["brand"],"#60a5fa"),
-                ("价格",f"${p['price']}","white"),
-                ("评分/评论",f"{p['rating']}★ / {p['reviewCount']:,}","#fbbf24"),
+                ("åç",p["brand"],"#60a5fa"),
+                ("ä»·æ ¼",f"${p['price']}","white"),
+                ("è¯å/è¯è®º",f"{p['rating']}â / {p['reviewCount']:,}","#fbbf24"),
                 ("BSR",f"#{p['bsr']}","#f87171"),
-                ("库存",p["inventoryStatus"],"#34d399"),
+                ("åºå­",p["inventoryStatus"],"#34d399"),
                 ("Buy Box",f"{p['buyBoxStatus']} ({p['buyBoxWinRate']}%)","white"),
-                ("Listing分",f"{p['listingQualityScore']}/100","#fbbf24"),
-                ("核心功能"," · ".join(p["features"][:2]),"#94a3b8"),
+                ("Listingå",f"{p['listingQualityScore']}/100","#fbbf24"),
+                ("æ ¸å¿åè½"," Â· ".join(p["features"][:2]),"#94a3b8"),
               ]
             ])}
           </div>
@@ -332,14 +479,12 @@ def render_overview(asin):
         """, unsafe_allow_html=True)
 
     with col_score:
-        # Build score bars HTML
         bars_html = ""
         for m in meta:
             sc = scores[m["key"]]
             mx = m["max"]
             pct = round(sc / mx * 100)
-            st_label = status_of(pct)
-            bar_color = color_map[st_label]
+            bar_color = score_color(pct)
             bars_html += f"""
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <div style="width:88px;font-size:10px;color:#94a3b8;text-align:right;flex-shrink:0">{m['label']}</div>
@@ -352,7 +497,7 @@ def render_overview(asin):
         st.markdown(f"""
         <div class="diag-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <span style="font-size:13px;font-weight:600;color:white">健康评分</span>
+            <span style="font-size:13px;font-weight:600;color:white">å¥åº·è¯å</span>
             {badge_html(overall)}
           </div>
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
@@ -363,38 +508,42 @@ def render_overview(asin):
             <div style="flex:1">{bars_html}</div>
           </div>
           <div style="background:rgba(51,65,85,0.4);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:10px;font-size:11px;color:#94a3b8">
-            <span style="color:#e2e8f0">综合诊断：</span>该 ASIN 处于
-            <span style="color:#fbbf24;font-weight:600">正常</span>水平，评论量不足是核心瓶颈，关键词自然流量有较大提升空间，广告存在浪费。
+            <span style="color:#e2e8f0">ç»¼åè¯æ­ï¼</span>è¯¥ ASIN å¤äº
+            <span style="color:#fbbf24;font-weight:600">æ­£å¸¸</span>æ°´å¹³ï¼è¯è®ºéä¸è¶³æ¯æ ¸å¿ç¶é¢ï¼å³é®è¯èªç¶æµéæè¾å¤§æåç©ºé´ï¼å¹¿åå­å¨æµªè´¹ã
           </div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Row 2: Issues / Opportunities / Actions
     c1, c2, c3 = st.columns(3)
     issues = [
-        "评论量仅1,247，竞品均值超9,000，转化信任度严重不足",
-        "Listing 质量分72分（满分100），图片和描述有优化空间",
-        "BSR 连续7天下滑，当前 #247，需广告干预",
+        "è¯è®ºéä»1,247ï¼ç«ååå¼è¶9,000ï¼è½¬åä¿¡ä»»åº¦ä¸¥éä¸è¶³",
+        "Listing è´¨éå72åï¼æ»¡å100ï¼ï¼å¾çåæè¿°æä¼åç©ºé´",
+        "BSR è¿ç»­7å¤©ä¸æ»ï¼å½å #247ï¼éå¹¿åå¹²é¢",
     ]
     opportunities = [
-        "'bluetooth speaker'(45万搜量)自然排名#18，进入Top10可大幅提升有机流量",
-        "'small bluetooth speaker'自然排名#12，广告ACOS仅20.1%，可放量",
-        "类目需求整体健康增长，竞品无明显价格护城河",
+        "'bluetooth speaker'(45ä¸æé)èªç¶æå#18ï¼è¿å¥Top10å¯å¤§å¹æåææºæµé",
+        "'small bluetooth speaker'èªç¶æå#12ï¼å¹¿åACOSä»20.1%ï¼å¯æ¾é",
+        "ç±»ç®éæ±æ´ä½å¥åº·å¢é¿ï¼ç«åæ ææ¾ä»·æ ¼æ¤åæ²³",
     ]
     suggestions = [
-        "30天内 Review 数量冲破2,000（Request a Review + Vine）",
-        "暂停 ACOS>50% 的广告词，节省约$376/月",
-        "开启 Sponsored Brands 视频广告，提升品牌认知",
+        "30å¤©å Review æ°éå²ç ´2,000ï¼Request a Review + Vineï¼",
+        "æå ACOS>50% çå¹¿åè¯ï¼èççº¦$376/æ",
+        "å¼å¯ Sponsored Brands è§é¢å¹¿åï¼æååçè®¤ç¥",
     ]
     for col, title, icon, color, items in [
-        (c1, "核心问题 Top 3", "⚠", "#f87171", issues),
-        (c2, "核心机会 Top 3", "◎", "#60a5fa", opportunities),
-        (c3, "建议动作 Top 3", "⚡", "#34d399", suggestions),
+        (c1, "æ ¸å¿é®é¢ Top 3", "â ", "#f87171", issues),
+        (c2, "æ ¸å¿æºä¼ Top 3", "â", "#60a5fa", opportunities),
+        (c3, "å»ºè®®å¨ä½ Top 3", "â¡", "#34d399", suggestions),
     ]:
         with col:
-            rows = "".join(f'<div style="display:flex;gap:6px;margin-bottom:6px"><span style="color:{color};font-weight:700;flex-shrink:0">{i+1}.</span><span style="font-size:11px;color:#cbd5e1">{item}</span></div>' for i,item in enumerate(items))
+            rows = "".join(
+                f'<div style="display:flex;gap:6px;margin-bottom:6px">'
+                f'<span style="color:{color};font-weight:700;flex-shrink:0">{i+1}.</span>'
+                f'<span style="font-size:11px;color:#cbd5e1">{item}</span></div>'
+                for i,item in enumerate(items)
+            )
             st.markdown(f"""
             <div class="diag-card">
               <div style="font-size:12px;font-weight:600;color:{color};margin-bottom:10px">{icon} {title}</div>
@@ -403,85 +552,83 @@ def render_overview(asin):
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MODULE 1 — CATEGORY
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MODULE 1 â CATEGORY
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_category():
     d = MOCK
     sc = MOCK["scores"]["category"]
-    with st.expander(f"📊 模块 1 · 品类分析    {badge_html('正常')}    {sc}/15分", expanded=True):
-        st.markdown(metric_card("当日销量","33","件","近7日均值38.6件，低于均值",True) +
-                    metric_card("类目Top100均值","37.1","件") +
-                    metric_card("类目份额","1.5%","","连续3日下滑",True) +
-                    metric_card("BSR排名","#247","","7天跌36位",True) +
-                    metric_card("Top10品牌均值","191","件","差距×5.8倍"), unsafe_allow_html=True)
-        # done by columns
+    st.markdown('<div id="sec-category" class="sec-anchor"></div>', unsafe_allow_html=True)
+    st.markdown(mod_header("ð", "åç±»åæ", "æ­£å¸¸", sc, 15), unsafe_allow_html=True)
+    with st.expander("å±å¼è¯¦æ", expanded=True):
         c1,c2,c3,c4,c5 = st.columns(5)
         cols_data = [
-            (c1, "当日销量", "33", "件", "近7日均值38.6件", True),
-            (c2, "类目均值", "37.1", "件", "Top100日均", False),
-            (c3, "类目份额", "1.5%", "", "连续3日下滑", True),
-            (c4, "BSR排名",  "#247", "", "7天跌36位", True),
-            (c5, "Top10均值","191", "件", "差距×5.8倍", False),
+            (c1, "å½æ¥éé", "33", "ä»¶", "è¿7æ¥åå¼38.6ä»¶", True),
+            (c2, "ç±»ç®åå¼", "37.1", "ä»¶", "Top100æ¥å", False),
+            (c3, "ç±»ç®ä»½é¢", "1.5%", "", "è¿ç»­3æ¥ä¸æ»", True),
+            (c4, "BSRæå",  "#247", "", "7å¤©è·36ä½", True),
+            (c5, "Top10åå¼","191", "ä»¶", "å·®è·Ã5.8å", False),
         ]
         for col, label, val, unit, sub, hl in cols_data:
             with col:
                 color = "#fbbf24" if hl else "white"
+                hl_style = "border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)" if hl else ""
                 st.markdown(f"""
-                <div class="diag-card" style="{'border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)' if hl else ''}">
+                <div class="diag-card" style="{hl_style}">
                   <div class="diag-label">{label}</div>
                   <div style="font-size:18px;font-weight:700;color:{color}">{val}<span style="font-size:11px;color:#94a3b8;margin-left:2px">{unit}</span></div>
                   <div class="diag-sub">{sub}</div>
                 </div>""", unsafe_allow_html=True)
 
-        # Sales trend chart
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["our_sales"], name="我方销量",
+        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["our_sales"], name="ææ¹éé",
             line=dict(color="#60a5fa", width=2), fill="tozeroy",
             fillcolor="rgba(96,165,250,0.1)"))
-        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["cat_avg"], name="类目均值",
+        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["cat_avg"], name="ç±»ç®åå¼",
             line=dict(color="#a78bfa", width=1.5, dash="dash")))
-        fig.update_layout(dark_layout(title="7日销量趋势对比", height=200))
+        fig.update_layout(dark_layout(title="7æ¥ééè¶å¿å¯¹æ¯", height=200))
         st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
 
-        # Brand share bar chart
         brands = d["top_brands"]
         fig2 = go.Figure(go.Bar(
             x=[b["share"] for b in brands], y=[b["brand"] for b in brands],
             orientation="h",
             marker=dict(color=["#34d399" if b["brand"]=="SoundMax" else "#3b82f6" for b in brands]),
         ))
-        fig2.update_layout(dark_layout(title="类目lk�牌份额分布 (%)", height=200, xaxis_title="市场份额 (%)"))
+        fig2.update_layout(dark_layout(title="ç±»ç®åçä»½é¢åå¸ (%)", height=200, xaxis_title="å¸åºä»½é¢ (%)"))
         st.plotly_chart(fig2, use_container_width=True, config=plotly_cfg())
 
-        st.markdown(judgment("销量趋势7日连续下滑，当前份额1.5%低于类目e��值；类目f��体保持增长，品类需求健康。"), unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(judgment("ééè¶å¿7æ¥è¿ç»­ä¸æ»ï¼å½åä»½é¢1.5%ä½äºç±»ç®åå¼ï¼ç±»ç®æ´ä½ä¿æå¢é¿ï¼åç±»éæ±å¥åº·ã"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">å»ºè®®å¨ä½</div>', unsafe_allow_html=True)
         st.markdown(action_list([
-            "立即检查是否有差评或 Q&A 影响转化",
-            "加强关键词广告投放，阻止 BSR 继续下滑",
-            "考虑 Coupon 或 Prime Exclusive Discount 刺激转化",
+            "ç«å³æ£æ¥æ¯å¦æå·®è¯æ Q&A å½±åè½¬å",
+            "å å¼ºå³é®è¯å¹¿åææ¾ï¼é»æ­¢ BSR ç»§ç»­ä¸æ»",
+            "èè Coupon æ Prime Exclusive Discount åºæ¿è½¬å",
         ]), unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MODULE 2 — BRAND
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MODULE 2 â BRAND
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_brand():
     d = MOCK
     sc = MOCK["scores"]["brand"]
-    with st.expander(f"🏆 模块 2 · 品牌分析    {badge_html('正常')}    {sc}/10分", expanded=True):
+    st.markdown('<div id="sec-brand" class="sec-anchor"></div>', unsafe_allow_html=True)
+    st.markdown(mod_header("ð", "åçåæ", "æ­£å¸¸", sc, 10), unsafe_allow_html=True)
+    with st.expander("å±å¼è¯¦æ", expanded=True):
         c1,c2,c3,c4 = st.columns(4)
         for col, label, val, sub, hl in [
-            (c1,"品牌类目排名","#8","Top10品牌",False),
-            (c2,"品牌市场份额","4.2%","过去7天",False),
-            (c3,"本ASIN贡献度","42%","占品牌总销量",True),
-            (c4,"品牌增长WoW","-3.2%","类目同期+1.4%",True),
+            (c1,"åçç±»ç®æå","#8","Top10åç",False),
+            (c2,"åçå¸åºä»½é¢","4.2%","è¿å»7å¤©",False),
+            (c3,"æ¬ASINè´¡ç®åº¦","42%","å åçæ»éé",True),
+            (c4,"åçå¢é¿WoW","-3.2%","ç±»ç®åæ+1.4%",True),
         ]:
             with col:
                 color = "#fbbf24" if hl else "white"
+                hl_style = "border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)" if hl else ""
                 st.markdown(f"""
-                <div class="diag-card" style="{'border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)' if hl else ''}">
+                <div class="diag-card" style="{hl_style}">
                   <div class="diag-label">{label}</div>
                   <div style="font-size:18px;font-weight:700;color:{color}">{val}</div>
                   <div class="diag-sub">{sub}</div>
@@ -490,48 +637,49 @@ def render_brand():
         bt = d["brand_trend"]
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=[r["date"] for r in bt], y=[r["brandIdx"] for r in bt], name="品牌指数",
+            x=[r["date"] for r in bt], y=[r["brandIdx"] for r in bt], name="åçææ°",
             line=dict(color="#60a5fa", width=2), mode="lines+markers",
             marker=dict(size=4, color="#60a5fa")))
         fig.add_trace(go.Scatter(
-            x=[r["date"] for r in bt], y=[r["catIdx"] for r in bt], name="类目指数",
+            x=[r["date"] for r in bt], y=[r["catIdx"] for r in bt], name="ç±»ç®ææ°",
             line=dict(color="#a78bfa", width=1.5, dash="dash"), mode="lines"))
-        fig.add_hline(y=100, line=dict(color="#334155", dash="dot"), annotation_text="基准线")
-        fig.update_layout(dark_layout(title="品牌 vs 类目趋势指数（基准=100）", height=200, yaxis_range=[78,115]))
+        fig.add_hline(y=100, line=dict(color="#334155", dash="dot"), annotation_text="åºåçº¿")
+        fig.update_layout(dark_layout(title="åç vs ç±»ç®è¶å¿ææ°ï¼åºå=100ï¼", height=200, yaxis_range=[78,115]))
         st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
 
-        st.markdown(judgment("品牌整体在下滑（-3.2% WoW），而类目同期增长1.4%；本 ASIN 贡献品牌42%销量，品牌势能偏弱。"), unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(judgment("åçæ´ä½å¨ä¸æ»ï¼-3.2% WoWï¼ï¼èç±»ç®åæå¢é¿1.4%ï¼æ¬ ASIN è´¡ç®åç42%ééï¼åçå¿è½åå¼±ã"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">å»ºè®®å¨ä½</div>', unsafe_allow_html=True)
         st.markdown(action_list([
-            "检查品牌下其他 ASIN 是否存在 Review 问题拖累品牌整体",
-            "考虑开启 Sponsored Brands 广告，强化品牌认知度",
-            "评估是否需要推出新款 ASIN 补充产品线",
+            "æ£æ¥åçä¸å¶ä» ASIN æ¯å¦å­å¨ Review é®é¢æç´¯åçæ´ä½",
+            "èèå¼å¯ Sponsored Brands å¹¿åï¼å¼ºååçè®¤ç¥åº¦",
+            "è¯ä¼°æ¯å¦éè¦æ¨åºæ°æ¬¾ ASIN è¡¥åäº§åçº¿",
         ]), unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MODULE 3 — COMPETITORS
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MODULE 3 â COMPETITORS
+# ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_competitors():
     sc = MOCK["scores"]["competition"]
     comps = MOCK["competitors"]
-    with st.expander(f"🎯 模块 3 · 竞品分析    {badge_html('正常')}    {sc}/20分", expanded=True):
-        # Build comparison table HTML
+    st.markdown('<div id="sec-competitor" class="sec-anchor"></div>', unsafe_allow_html=True)
+    st.markdown(mod_header("ð¯", "ç«ååæ", "æ­£å¸¸", sc, 20), unsafe_allow_html=True)
+    with st.expander("å±å¼è¯¦æ", expanded=True):
         rows_html = ""
         for c in comps:
             ours = c["ours"]
-            prefix = '<span style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);padding:1px 6px;border-radius:3px;font-size:10px;margin-right:4px">我方</span>' if ours else ""
+            prefix = '<span style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);padding:1px 6px;border-radius:3px;font-size:10px;margin-right:4px">ææ¹</span>' if ours else ""
             rev_color = 'class="red-val"' if ours and c["reviews"]<3000 else ""
             rat_color = "green-val" if c["rating"]>=4.5 else ("amber-val" if c["rating"]>=4.0 else "red-val")
             ls_color  = "green-val" if c["lscore"]>=85 else ("amber-val" if c["lscore"]>=75 else "red-val")
-            disc = f'<span class="green-val">-{c["discount"]}%</span>' if c["discount"]>0 else "—"
+            disc = f'<span class="green-val"al">-{c["discount"]}%</span>' if c["discount"]>0 else "â"
             row_style = ' style="background:rgba(59,130,246,0.04)"' if ours else ""
             rows_html += f"""
             <tr{row_style}>
               <td>{prefix}<span style="font-family:monospace;font-size:11px">{c['asin']}</span><br><span style="color:#64748b;font-size:10px">{c['brand']}</span></td>
               <td style="font-weight:600;color:white">${c['price']}</td>
               <td>{disc}</td>
-              <td class="{rat_color}">{c['rating']}★</td>
+              <td class="{rat_color}">{c['rating']}â</td>
               <td {rev_color}>{c['reviews']:,}</td>
               <td>{c['sales']:,}</td>
               <td style="color:#64748b">{c['budget']}</td>
@@ -542,66 +690,63 @@ def render_competitors():
         st.markdown(f"""
         <div class="tbl-wrapper">
         <table class="dtbl">
-          <thead><tr><th>ASIN / 品牌</th><th>价格</th><th>折扣</th><th>评分</th><th>评论量</th><th>月销估算</th><th>广告预算</th><th>Listing分</th><th>BSR</th></tr></thead>
+          <thead><tr><th>ASIN / åç</th><th>ä»·æ ¼</th><th>ææ£</th><th>è¯å</th><th>è¯è®ºé</th><th>æéä¼°ç®</th><th>å¹¿åé¢ç®</th><th>Listingå</th><th>BSR</th></tr></thead>
           <tbody>{rows_html}</tbody>
         </table></div>""", unsafe_allow_html=True)
 
         c_adv, c_dis = st.columns(2)
         with c_adv:
-            adv_rows = "".join(f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#34d399">+</span>{a}</div>' for a in [
-                "24H 续航领先多数竞品",
-                "双配对功能差异化",
-                "USB-C 充电体验好",
-                "价格中档区间具备竞争力",
-            ])
-            st.markdown(f'<div class="adv-card"><div style="font-size:12px;font-weight:600;color:#34d399;margin-bottom:8px">✓ 我方优势</div>{adv_rows}</div>', unsafe_allow_html=True)
+            adv_rows = "".join(
+                f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#34d399">+</span>{a}</div>'
+                for a in ["24H ç»­èªé¢åå¤æ°ç«å","åéå¯¹åè½å·®å¼å","USB-C åçµä½éªå¥½","ä»·æ ¼ä¸­æ¡£åºé´å·å¤ç«äºå"]
+            )
+            st.markdown(f'<div class="adv-card"><div style="font-size:12px;font-weight:600;color:#34d399;margin-bottom:8px">â ææ¹ä¼å¿</div>{adv_rows}</div>', unsafe_allow_html=True)
         with c_dis:
-            dis_rows = "".join(f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#f87171">-</span>{a}</div>' for a in [
-                "评论量仅1247，竞品均值9270（-87%）",
-                "Listing 质量分72，低于所有竞品",
-                "品牌知名度弱，无 Brand Story",
-                "BSR #247，落后 Tribit(#22)、Anker(#12)",
-            ])
-            st.markdown(f'<div class="dis-card"><div style="font-size:12px;font-weight:600;color:#f87171;margin-bottom:8px">✗ 我方劣势</div>{dis_rows}</div>', unsafe_allow_html=True)
+            dis_rows = "".join(
+                f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#f87171">-</span>{a}</div>'
+                for a in ["è¯è®ºéä»1247ï¼ç«ååå¼9270ï¼-87%ï¼","Listing è´¨éå72ï¼ä½äºææç«å","åçç¥ååº¦å¼±ï¼æ  Brand Story","BSR #247ï¼è½å Tribit(#22)ãAnker(#12)"]
+            )
+            st.markdown(f'<div class="dis-card"><div style="font-size:12px;font-weight:600;color:#f87171;margin-bottom:8px">â ææ¹å£å¿</div>{dis_rows}</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="risk-box" style="margin-top:10px"><span style="font-weight:600">⚠ 最大风险：</span>评论量极度不足，在同类搜索页面中信任感最低，严重拖累转化率。</div>', unsafe_allow_html=True)
-        st.markdown('<div class="prio-box" style="margin-top:6px"><span style="font-weight:600">→ 优先优化：</span>30天内Review破2000是单一最高ROI动作，优先于任何广告优化。</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown('<div class="risk-box" style="margin-top:10px"><span style="font-weight:600">â  æå¤§é£é©ï¼</span>è¯è®ºéæåº¦ä¸è¶³ï¼å¨åç±»æç´¢é¡µé¢ä¸­ä¿¡ä»»ææä½ï¼ä¸¥éæç´¯è½¬åçã</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prio-box" style="margin-top:6px"><span style="font-weight:600">â ä¼åä¼åï¼</span>30å¤©åReviewç ´2000æ¯åä¸æé«ROIå¨ä½ï¼ä¼åäºä»»ä½å¹¿åä¼åã</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">å»ºè®®å¨ä½</div>', unsafe_allow_html=True)
         st.markdown(action_list([
-            "优先刷新 Review 数量：批量发送 Request a Review，目标30天内破2000",
-            "Price 压至 $42.99 测试是否提升 CVR 并赶超 Tribit",
-            "补充 Lifestyle 图和对比图，提升 Listing 质量分",
+            "ä¼åå·æ° Review æ°éï¼æ¹éåé Request a Reviewï¼ç®æ 30å¤©åç ´2000",
+            "Price åè³ $42.99 æµè¯æ¯å¦æå CVR å¹¶èµ¶è¶ Tribit",
+            "è¡¥å Lifestyle å¾åå¯¹æ¯å¾ï¼æå Listing è´¨éå",
         ]), unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MODULE 4 — KEYWORDS
-# ─────────────────────────────────────────────────────────────
+# ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MODULE 4 â KEYWORDS
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_keywords():
     sc = MOCK["scores"]["keywords"]
     kws = MOCK["keywords"]
-    with st.expander(f"🔍 模块 4 · 关键词分析    {badge_html('正常')}    {sc}/20分", expanded=True):
+    st.markdown('<div id="sec-keywords" class="sec-anchor"></div>', unsafe_allow_html=True)
+    st.markdown(mod_header("ð", "å³é®è¯åæ", "æ­£å¸¸", sc, 20), unsafe_allow_html=True)
+    with st.expander("å±å¼è¯¦æ", expanded=True):
         def fmt_rank(r, good=10, ok=20):
             if r<=good: return f'<span class="green-val">#{r}</span>'
             if r<=ok:   return f'<span class="amber-val">#{r}</span>'
             return f'<span class="red-val">#{r}</span>'
         def fmt_chg(c):
-            if c>0: return f'<span class="green-val">↑{c}</span>'
-            if c<0: return f'<span class="red-val">↓{abs(c)}</span>'
-            return '<span style="color:#64748b">—</span>'
-        def fmt_opp(o):
+            if c>0: return f'<span class="green-val">â{c}</span>'
+            if c<0: return f'<span class="red-val">â{abs(c)}</span>'
+            return '<span style="color:#64748b">â</span>'
+           def fmt_opp(o):
             if o>=80: return f'<span class="green-val">{o}</span>'
             if o>=70: return f'<span class="blue-val">{o}</span>'
             return f'<span style="color:#64748b">{o}</span>'
         def fmt_vol(v):
-            if v>=100000: return f"{v//1000}K"
             return f"{v//1000}K"
 
         rows = "".join(f"""
         <tr>
           <td style="font-weight:500;color:white">{k['kw']}</td>
           <td>{fmt_vol(k['vol'])}</td>
-          <td style="color:{'#34d399' if k['trend']=='↑' else '#94a3b8'}">{k['trend']}</td>
+          <td style="color:{'#34d399' if k['trend']=='â' else '#94a3b8'}">{k['trend']}</td>
           <td>{fmt_rank(k['org'])}</td>
           <td>{fmt_rank(k['spn'],5,10)}</td>
           <td>{fmt_chg(k['chg'])}</td>
@@ -613,50 +758,50 @@ def render_keywords():
         st.markdown(f"""
         <div class="tbl-wrapper">
         <table class="dtbl">
-          <thead><tr><th>关键词</th><th>搜索量/月</th><th>趋势</th><th>自然排名</th><th>广告排名</th><th>7天变化</th><th>竞品覆盖</th><th>机会分</th><th>状态</th></tr></thead>
+          <thead><tr><th>å³é®è¯</th><th>æç´¢é/æ</th><th>è¶å¿</th><th>èªç¶æå</th><th>å¹¿åæå</th><th>7å¤©åå</th><th>ç«åè¦ç</th><th>æºä¼å</th><th>ç¶æ</th></tr></thead>
           <tbody>{rows}</tbody>
         </table></div>""", unsafe_allow_html=True)
 
-        st.markdown(judgment("核心词自然排名偏低（前3词均在#12-32），'waterproof speaker'排名骤降，广告端部分词效率良好。"), unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(judgment("æ ¸å¿è¯èªç¶æååä½ï¼å3è¯åå¨#12-32ï¼ï¼'waterproof speaker'æåéª¤éï¼å¹¿åç«¯é¨åè¯æçè¯å¥½ã"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">å»ºè®®å¨ä½</div>', unsafe_allow_html=True)
         st.markdown(action_list([
-            "'small bluetooth speaker' 自然排名#12，加码广告冲Top5",
-            "'waterproof bluetooth speaker' 需Listing优化（标题/5点）后再推广告",
-            "'bluetooth speaker'(45万搜量) 有机排名仅#18，是最大增量机会",
+            "'small bluetooth speaker' èªç¶æå#12ï¼å ç å¹¿åå²Top5",
+            "'waterproof bluetooth speaker' éListingä¼åï¼æ é¢/5ç¹ï¼ååæ¨å¹¿å",
+            "'bluetooth speaker'(45ä¸æé) ææºæåä»#18ï¼æ¯æå¤§å¢éæºä¼",
         ]), unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MODULE 5 — ADS
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MODULE 5 â ADS
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_ads():
     sc = MOCK["scores"]["ads"]
     s = MOCK["ads_summary"]
     camps = MOCK["campaigns"]
     ad_kws = MOCK["ad_kws"]
-    with st.expander(f"💰 模块 5 · 广告分析    {badge_html('正常')}    {sc}/20分", expanded=True):
-        # Summary metrics
+    st.markdown('<div id="sec-ads" class="sec-anchor"></div>', unsafe_allow_html=True)
+    st.markdown(mod_header("ð°", "å¹¿ååæ", "æ­£å¸¸", sc, 20), unsafe_allow_html=True)
+    with st.expander("å±å¼è¯¦æ", expanded=True):
         cols = st.columns(9)
         metrics = [
-            ("总花费", f"${s['spend']:,}"),("曝光量",f"{s['impressions']//1000}K"),("点击量",f"{s['clicks']:,}"),
+            ("æ»è±è´¹", f"${s['spend']:,}"),("æåé",f"{s['impressions']//1000}K"),("ç¹å»é",f"{s['clicks']:,}"),
             ("CTR",f"{s['ctr']}%"),("CVR",f"{s['cvr']}%"),("CPC",f"${s['cpc']}"),
-            ("转化数",str(s['conv'])),("ACOS",f"{s['acos']}%"),("ROAS",f"{s['roas']}x"),
+            ("è½¬åæ°",str(s['conv'])),("ACOS",f"{s['acos']}%"),("ROAS",f"{s['roas']}x"),
         ]
         for col,(label,val) in zip(cols, metrics):
             with col:
                 hl = label=="ACOS" and s['acos']>30
                 clr = "#fbbf24" if hl else "white"
+                hl_style = "border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)" if hl else ""
                 st.markdown(f"""
-                <div class="diag-card" style="{'border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)' if hl else ''}; padding:10px">
+                <div class="diag-card" style="{hl_style};padding:10px">
                   <div class="diag-label">{label}</div>
                   <div style="font-size:15px;font-weight:700;color:{clr}">{val}</div>
                 </div>""", unsafe_allow_html=True)
 
-        tab_camp, tab_kw = st.tabs(["📋 广告活动", "🔑 关键词明细"])
+        tab_camp, tab_kw = st.tabs(["ð å¹¿åæ´»å¨", "ð å³é®è¯æç»"])
 
         with tab_camp:
-            def camp_health(h):
-                return badge_html("good" if h=="good" else "warn")
             rows = "".join(f"""
             <tr>
               <td style="color:white;font-weight:500">{c['name']}</td>
@@ -665,12 +810,12 @@ def render_ads():
               <td>{c['ctr']}%</td><td>{c['cvr']}%</td>
               <td class="{'red-val' if c['acos']>35 else ('amber-val' if c['acos']>28 else 'green-val')}">{c['acos']}%</td>
               <td>{c['roas']}x</td>
-              <td>{camp_health(c['health'])}</td>
+              <td>{badge_html('good' if c['health']=='good' else 'warn')}</td>
             </tr>""" for c in camps)
             st.markdown(f"""
             <div class="tbl-wrapper">
             <table class="dtbl">
-              <thead><tr><th>广告活动</th><th>花费</th><th>曝光</th><th>点击</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>状态</th></tr></thead>
+              <thead><tr><th>å¹¿åæ´»å¨</th><th>è±è´¹</th><th>æå</th><th>ç¹å»</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>ç¶æ</th></tr></thead>
               <tbody>{rows}</tbody>
             </table></div>""", unsafe_allow_html=True)
 
@@ -687,24 +832,32 @@ def render_ads():
             st.markdown(f"""
             <div class="tbl-wrapper">
             <table class="dtbl">
-              <thead><tr><th>关键词</th><th>花费</th><th>点击</th><th>CTR</th><th>CPC</th><th>转化</th><th>CVR</th><th>ACOS</th><th>状态</th></tr></thead>
+              <thead><tr><th>å³é®è¯</th><th>è±è´¹</th><th>ç¹å»</th><th>CTR</th><th>CPC</th><th>è½¬å</th><th>CVR</th><th>ACOS</th><th>ç¶æ</th></tr></thead>
               <tbody>{rows}</tbody>
             </table></div>""", unsafe_allow_html=True)
 
-        st.markdown(judgment("整体 ACOS 28.5% 尚可，但'waterproof speaker'和'ipx7 speaker'两词 ACOS 超50%，拖累整体效率。"), unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(judgment("æ´ä½ ACOS 28.5% å°å¯ï¼ä½'waterproof speaker'å'ipx7 speaker'ä¸¤è¯ ACOS è¶50%ï¼æç´¯æ´ä½æçã"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">å»ºè®®å¨ä½</div>', unsafe_allow_html=True)
         st.markdown(action_list([
-            "立即暂停/否词 'waterproof speaker'（ACOS 54.9%）和 'ipx7 speaker'（50.3%）",
-            "提高 'small bluetooth speaker' 和 'outdoor speaker' 预算（ACOS 20-22%，机会词）",
-            "开启 Sponsored Brands 视频广告，提升 CTR",
+            "ç«å³æå/å¦è¯ 'waterproof speaker'ï¼ACOS 54.9%ï¼å 'ipx7 speaker'ï¼50.3%ï¼",
+            "æé« 'small bluetooth speaker' å 'outdoor speaker' é¢ç®ï¼ACOS 20-22%ï¼æºä¼è¯ï¼",
+            "å¼å¯ Sponsored Brands è§é¢å¹¿åï¼æå CTR",
         ]), unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# MODULE 6 — 30-DAY ACTION PLAN
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# MODULE 6 â 30-DAY ACTION PLAN
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_action_plan():
-    with st.expander("🎯 模块 6 · 未来30天目标与运营方案", expanded=True):
+    st.markdown('<div id="sec-plan" class="sec-anchor"></div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="mod-header" style="border-left-color:#a78bfa">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">ð</span>
+        <span class="mod-title">æªæ¥30å¤©ç®æ ä¸è¿è¥æ¹æ¡</span>
+      </div>
+    </div>""", unsafe_allow_html=True)
+    with st.expander("å±å¼è¯¦æ", expanded=True):
         col_a, col_b = st.columns(2)
 
         def plan_actions_html(actions):
@@ -724,130 +877,129 @@ def render_action_plan():
 
         with col_a:
             actions_a = [
-                {"p":"P0","action":"暂停 'waterproof speaker' 和 'ipx7 speaker' 广告词","impact":"节省约$376/月无效花费","d":"D1"},
-                {"p":"P1","action":"将售价从 $45.99 提升至 $47.99 A/B测试一周","impact":"利润率提升约4%，观察 CVR 变化","d":"D3"},
-                {"p":"P1","action":"提高 'small bluetooth speaker' 预算20%（ACOS 20.1%）","impact":"预估新增约40次转化/月","d":"D5"},
-                {"p":"P2","action":"优化 Listing Title 自然植入 'waterproof' 词","impact":"提升该词自然流量，减少广告依赖","d":"D7"},
-                {"p":"P2","action":"申请 A+ Content（若未开通）","impact":"预估 CVR 提升5-8%","d":"D14"},
+                {"p":"P0","action":"æå 'waterproof speaker' å 'ipx7 speaker' å¹¿åè¯","impact":"èççº¦$376/ææ æè±è´¹","d":"D1"},
+                {"p":"P1","action":"å°å®ä»·ä» $45.99 æåè³ $47.99 A/Bæµè¯ä¸å¨","impact":"å©æ¶¦çæåçº¦4%ï¼è§å¯ CVR åå","d":"D3"},
+                {"p":"P1","action":"æé« 'small bluetooth speaker' é¢ç®20%ï¼ACOS 20.1%ï¼","impact":"é¢ä¼°æ°å¢çº¦40æ¬¡è½¬å/æ","d":"D5"},
+                {"p":"P2","action":"ä¼å Listing Title èªç¶æ¤å¥ 'waterproof' è¯","impact":"æåè¯¥è¯èªç¶æµéï¼åå°å¹¿åä¾èµ","d":"D7"},
+                {"p":"P2","action":"ç³è¯· A+ Contentï¼è¥æªå¼éï¼","impact":"é¢ä¼° CVR æå5-8%","d":"D14"},
             ]
             st.markdown(f"""
             <div class="plan-card plan-a">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:13px;font-weight:700;color:#60a5fa">方案 A · 利润最大化</span>
+                <span style="font-size:13px;font-weight:700;color:#60a5fa">æ¹æ¡ A Â· å©æ¶¦æå¤§å</span>
                 <div style="text-align:right">
-                  <div style="font-size:10px;color:#64748b">成功概率</div>
+                  <div style="font-size:10px;color:#64748b">æåæ¦ç</div>
                   <div style="font-size:22px;font-weight:800;color:#60a5fa">62%</div>
                 </div>
               </div>
-              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">削减低效广告花费，小幅提价，聚焦高 ROAS 词，预计30天利润提升约37%。</div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">ååä½æå¹¿åè±è´¹ï¼å°å¹æä»·ï¼èç¦é« ROAS è¯ï¼é¢è®¡30å¤©å©æ¶¦æåçº¦37%ã</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-                <div class="p-card"><div class="diag-label">目标利润/月</div><div style="font-size:15px;font-weight:700;color:white">$8,500</div><div style="font-size:11px;color:#34d399">+37% vs 当前</div></div>
-                <div class="p-card"><div class="diag-label">当前利润/月</div><div style="font-size:15px;font-weight:700;color:#94a3b8">$6,200</div></div>
+                <div class="p-card"><div class="diag-label">ç®æ å©æ¶¦/æ</div><div style="font-size:15px;font-weight:700;color:white">$8,500</div><div style="font-size:11px;color:#34d399">+37% vs å½å</div></div>
+                <div class="p-card"><div class="diag-label">å½åå©æ¶¦/æ</div><div style="font-size:15px;font-weight:700;color:#94a3b8">$6,200</div></div>
               </div>
-              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>
+              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">å³é®å¨ä½æ¸å</div>
               {plan_actions_html(actions_a)}
               <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">
-                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ 提价初期可能带来 CVR 短暂下滑</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ 削减广告可能影响 BSR 排名动能</div>
+                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">é£é©æç¤º</div>
+                <div style="font-size:11px;color:#94a3b8">â  æä»·åæå¯è½å¸¦æ¥ CVR ç­æä¸æ»</div>
+                <div style="font-size:11px;color:#94a3b8">â  ååå¹¿åå¯è½å½±å BSR æåå¨è½</div>
               </div>
             </div>""", unsafe_allow_html=True)
 
         with col_b:
             actions_b = [
-                {"p":"P0","action":"总广告预算提升至 $4,200/月（+48%）","impact":"预估新增约450次点击/月","d":"D1"},
-                {"p":"P0","action":"30天内 Review 数量破 2000（Request a Review）","impact":"提升搜索权重和转化率","d":"D1"},
-                {"p":"P1","action":"开启 Sponsored Brands 视频广告","impact":"提升上层流量认知","d":"D5"},
-                {"p":"P1","action":"补充 2 张 Lifestyle 图 + 1 张对比图","impact":"预估 CTR 提升3-5%","d":"D7"},
-                {"p":"P2","action":"将售价降至 $42.99 配合 Coupon 5%","impact":"提升 CVR，争抢 Tribit 价格段","d":"D10"},
+                {"p":"P0","action":"æ»å¹¿åé¢ç®æåè³ $4,200/æï¼+48%ï¼","impact":"é¢ä¼°æ°å¢çº¦450æ¬¡ç¹å»/æ","d":"D1"},
+                {"p":"P0","action":"30å¤©å Review æ°éç ´ 2000ï¼Request a Reviewï¼","impact":"æåæç´¢æéåè½¬åç","d":"D1"},
+                {"p":"P1","action":"å¼å¯ Sponsored Brands è§é¢å¹¿å","impact":"æåä¸å±æµéè®¤ç¥","d":"D5"},
+                {"p":"P1","action":"è¡¥å 2 å¼  Lifestyle å¾ + 1 å¼ å¯¹æ¯å¾","impact":"é¢ä¼° CTR æå3-5%","d":"D7"},
+                {"p":"P2","action":"å°å®ä»·éè³ $42.99 éå Coupon 5%","impact":"æå CVRï¼äºæ¢ Tribit ä»·æ ¼æ®µ","d":"D10"},
             ]
             st.markdown(f"""
             <div class="plan-card plan-b">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:13px;font-weight:700;color:#34d399">方案 B · 日均销量提升30%</span>
+                <span style="font-size:13px;font-weight:700;color:#34d399">æ¹æ¡ B Â· æ¥åééæå30%</span>
                 <div style="text-align:right">
-                  <div style="font-size:10px;color:#64748b">成功概率</div>
+                  <div style="font-size:10px;color:#64748b">æåæ¦ç</div>
                   <div style="font-size:22px;font-weight:800;color:#34d399">55%</div>
                 </div>
               </div>
-              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">加大广告投入并优化关键词自然排名，同步提升 Listing 质量，目标月销量破 1274 单。</div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">å å¤§å¹¿åæå¥å¹¶ä¼åå³é®è¯èªç¶æåï¼åæ­¥æå Listing è´¨éï¼ç®æ æééç ´ 1274 åã</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-                <div class="p-card"><div class="diag-label">目标月销量</div><div style="font-size:15px;font-weight:700;color:white">1,274件</div><div style="font-size:11px;color:#34d399">+30% vs 当前</div></div>
-                <div class="p-card"><div class="diag-label">当前月销量</div><div style="font-size:15px;font-weight:700;color:#94a3b8">980件</div></div>
+                <div class="p-card"><div class="diag-label">ç®æ æéé</div><div style="font-size:15px;font-weight:700;color:white">1,274ä»¶</div><div style="font-size:11px;color:#34d399">+30% vs å½å</div></div>
+                <div class="p-card"><div class="diag-label">å½åæéé</div><div style="font-size:15px;font-weight:700;color:#94a3b8">980ä»¶</div></div>
               </div>
-              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>
+              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">å³é®å¨ä½æ¸å</div>
               {plan_actions_html(actions_b)}
               <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">
-                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ 初期 ACOS 预计升至32-35%，需接受短期效率牺牲</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ Review 增长需4-6周才能体现在搜索权重上</div>
+                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">é£é©æç¤º</div>
+                <div style="font-size:11px;color:#94a3b8">â  åæ ACOS é¢è®¡åè³32-35%ï¼éæ¥åç­ææççºç²</div>
+                <div style="font-size:11px;color:#94a3b8">â  Review å¢é¿é4-6å¨æè½ä½ç°å¨æç´¢æéä¸</div>
               </div>
             </div>""", unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 # FOOTER
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def render_footer():
     api_fns = ["getAsinOverview","getCategoryAnalysis","getBrandAnalysis","getCompetitorAnalysis","getKeywordAnalysis","getAdsAnalysis","getActionPlan"]
-    fns_html = "".join(f'<span style="font-family:monospace;font-size:10px;color:#64748b;background:rgba(51,65,85,0.4);padding:3px 8px;border-radius:4px">{fn}()</span>' for fn in api_fns)
+    fns_html = "".join(f'<span class="api-fn">{fn}()</span>' for fn in api_fns)
     st.markdown(f"""
     <div style="margin:0 24px 24px 24px;background:rgba(30,41,59,0.3);border:1px solid rgba(71,85,105,0.4);border-radius:12px;padding:16px">
-      <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px">数据来源说明</div>
-      <div style="font-size:11px;color:#64748b">当前为 <span style="color:#fbbf24;font-weight:600">模拟数据</span>，所有数值仅供演示。可替换为：Amazon Rainforest API · Keepa API · Amazon ABA · Ads Console 报告 · ERP 数据</div>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(71,85,105,0.4);display:flex;flex-wrap:wrap;gap:6px">{fns_html}</div>
+      <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:4px">æ°æ®æ¥å£è¯´æ</div>
+      <div style="font-size:11px;color:#64748b">å½åä¸º <span style="color:#fbbf24;font-weight:600">æ¨¡ææ°æ®</span>ï¼æææ°å¼ä»ä¾æ¼ç¤ºãå¯å¯¹æ¥ï¼Amazon Rainforest API &middot; Keepa API &middot; Amazon ABA &middot; Ads Console æ¥å &middot; ERP æ°æ®</div>
+      <div class="api-fn-wrap">{fns_html}</div>
     </div>
     """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 # MAIN
-# ─────────────────────────────────────────────────────────────
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def main():
-    # Session state
     if "has_data" not in st.session_state:
         st.session_state.has_data = True
     if "current_asin" not in st.session_state:
         st.session_state.current_asin = "B0D54LVZK5"
 
+    render_sidebar()
     render_topbar()
 
-    # ── Input bar ──
+    # Input bar
     st.markdown('<div style="background:rgba(15,23,42,0.97);border-bottom:1px solid rgba(71,85,105,0.5);padding:8px 24px 6px 24px">', unsafe_allow_html=True)
     col_asin, col_site, col_period, col_btn, col_refresh, col_score = st.columns([4,1,2,1.5,1.5,2])
 
     with col_asin:
-        asin_input = st.text_input("ASIN", value=st.session_state.current_asin, label_visibility="collapsed", placeholder="输入 ASIN...")
+        asin_input = st.text_input("ASIN", value=st.session_state.current_asin, label_visibility="collapsed", placeholder="è¾å¥ ASIN...")
     with col_site:
-        site = st.selectbox("站点", ["US","CA","UK","DE","JP"], label_visibility="collapsed")
+        site = st.selectbox("ç«ç¹", ["US","CA","UK","DE","JP"], label_visibility="collapsed")
     with col_period:
-        period = st.radio("时间", ["日","周"], horizontal=True, label_visibility="collapsed")
+        period = st.radio("æ¶é´", ["æ¥","å¨"], horizontal=True, label_visibility="collapsed")
     with col_btn:
-        if st.button("🔍 开始分析", use_container_width=True):
+        if st.button("ð å¼å§åæ", use_container_width=True):
             if asin_input.strip():
-                with st.spinner(f"正在诊断 {asin_input.upper()}..."):
+                with st.spinner(f"æ­£å¨è¯æ­ {asin_input.upper()}..."):
                     time.sleep(1.2)
                 st.session_state.current_asin = asin_input.strip().upper()
                 st.session_state.has_data = True
                 st.rerun()
     with col_refresh:
-        if st.button("↻ 刷新", use_container_width=True):
+        if st.button("â» å·æ°", use_container_width=True):
             st.rerun()
     with col_score:
         total = MOCK["scores"]["total"]
         overall = status_of(total)
         if st.session_state.has_data:
-            c_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+            c_map = {"ä¼ç§":"#34d399","è¾å¥½":"#60a5fa","æ­£å¸¸":"#fbbf24","å¼å¸¸":"#f87171"}
             st.markdown(f"""
             <div style="height:100%;display:flex;align-items:center;gap:8px;margin-top:4px">
               <span style="font-size:18px;font-weight:800;color:{c_map[overall]}">{total}/100</span>
               {badge_html(overall)}
             </div>""", unsafe_allow_html=True)
 
-    # Example ASINs
     st.markdown("""
     <div style="font-size:11px;color:#475569;margin-top:4px;display:flex;gap:12px;align-items:center">
-      <span>示例：</span>
+      <span>ç¤ºä¾ï¼</span>
       <span style="font-family:monospace">B0D54LVZK5</span>
       <span style="font-family:monospace">B08N5WRWNW</span>
       <span style="font-family:monospace">B07FZ8S74R</span>
@@ -858,30 +1010,28 @@ def main():
     if not st.session_state.has_data:
         st.markdown("""
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 0;color:#64748b">
-          <div style="font-size:40px;margin-bottom:16px">📦</div>
-          <div style="font-size:14px">输入 ASIN 并点击「开始分析」</div>
+          <div style="font-size:40px;margin-bottom:16px">ð</div>
+          <div style="font-size:14px">è¾å¥ ASIN å¹¶ç¹å»ãå¼å§åæã</div>
         </div>""", unsafe_allow_html=True)
         return
 
-    # ── Section header ──
     asin = st.session_state.current_asin
     p = MOCK["product"]
     st.markdown(f"""
     <div style="padding:14px 24px 8px 24px;display:flex;align-items:center;justify-content:space-between">
       <div>
-        <span style="font-size:14px;font-weight:700;color:white">诊断报告 · </span>
+        <span style="font-size:14px;font-weight:700;color:white">è¯æ­æ¥å Â· </span>
         <span style="font-size:14px;font-weight:700;color:#60a5fa;font-family:monospace">{asin}</span>
-        <span style="font-size:11px;color:#64748b;margin-left:10px">{p['category']} · 站点 {site} · 过去7天</span>
+        <span style="font-size:11px;color:#64748b;margin-left:10px">{p['category']} Â· ç«ç¹ {site} Â· è¿å»7å¤©</span>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # ── Modules ──
     with st.container():
         st.markdown('<div style="padding:0 24px">', unsafe_allow_html=True)
         render_overview(asin)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="padding:0 24px;display:flex;flex-direction:column;gap:12px">', unsafe_allow_html=True)
+    st.markdown('<div style="padding:0 24px;display:flex;flex-direction:column;gap:4px">', unsafe_allow_html=True)
     render_category()
     render_brand()
     render_competitors()
