@@ -1,5 +1,4 @@
-# probe
-import streamlit as st  # v2x
+import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 import time
@@ -275,13 +274,74 @@ def pct_color(v):
 
 def render_topbar():
     st.markdown("""
-    <div class="diag-topbar" style="display:flex;align-items:center;justify-contѕ������������ݕ����(�������؁��屔􉑥�����陱��텱�����ѕ��鍕�ѕ�흅��������(���������؁��屔�ݥ�Ѡ�����������������퉅���ɽչ��͈�ɘ�퉽ɑ�ȵɅ��������푥�����陱��텱�����ѕ��鍕�ѕ�����ѥ�䵍��ѕ��鍕�ѕ�홽�еͥ���������~N�𽑥��(����������������屔􉙽�еͥ������홽�еݕ��������퍽����ݡ�є����ѕȵ���������������ͥ����������(����������������屔􉙽�еͥ������퍽��������ለ���齸��6[��ۢ�C�B���+�Z��ޗ��������(������𽑥��(��������������屔􉙽�еͥ������퍽��������ለ�(����������������屔􉑥�����饹�����������ݥ�Ѡ���������������퉽ɑ�ȵɅ��������퉅���ɽչ�荘�������ɝ���ɥ���������������(������������.�VÚ6������<�
-܃�>��n��6����r��x�A$��VÚ6�(������������(����𽑥��(���������չͅ��}�����}�ѵ��Q�Ք�((���R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R (��=YIY%\(���R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R ()����ɕ����}�ٕ�٥�ܡ�ͥ���(�������5=
--l��ɽ�ՍЉt(����͍�ɕ̀�5=
--l�͍�ɕ̉t(������ф��5=
--l�͍�ɕ5�ф�t(����ѽх���͍�ɕ�l�ѽх��t(�����ٕɅ�����х���}���ѽх��(���������}�����싒�c�� �舌�ѐ��䈰������舌���ՙ�����������舍�����Ј��������舍�����ĉ�(����ɥ��}����Ȁ􁍽���}���m�ٕɅ��t((�����й��ɭ��ݸ���؁��屔���������������������������չͅ��}�����}�ѵ��Q�Ք�((������I�܀��M%8��������!���Ѡ�M��ɔ(�������}���������}͍�ɔ���й���յ�̡lܰ��t�((����ݥѠ����}�����(���������й��ɭ��ݸ�����(���������؁�����􉑥�����ɐ��(�����������؁��屔􉑥�����陱��텱�����ѕ��鍕�ѕ�흅��������ɝ������ѽ�������(��������������������屔􉉅���ɽչ��ɝ�����������ذ��Ȥ퍽�������ՙ�퉽ɑ�������ͽ����ɝ����ذ��԰������Ф����������������퉽ɑ�ȵɅ��������홽�еͥ������홽�е������鵽�����������l��ͥ��u�������(��������������������屔􉙽�еͥ������퍽��������ለ���l���ѕ����u�������(����������𽑥��(�����������؁��屔􉙽�еͥ������홽�еݕ��������퍽����ݡ�є�������������ĸ����ɝ������ѽ����������l�ѥѱ��u�𽑥��(�����������؁��屔􉑥������ɥ��ɥ��ѕ����є����յ���ɕ���РаřȤ흅�������(������������윜������l(�����������������؁����������ɐ���؁�����􉑥�������������𽑥���؁��屔􉙽�еͥ������홽�еݕ��������퍽����������𽑥��𽑥���(����������������ȁ��ر�����l(�������������������N�&0���l��Ʌ���t������ՙ����(��������������������ߚ���������l��ɥ���u􈰉ݡ�є���(���������������������"�����舱����l�Ʌѥ���u��b�����l�ɕ٥��
-�չНt�􈰈������Ј��(������������������	MH�������l���ȝu􈰈������Ĉ��(��������������������O��`���l���ٕ�ѽ��Mх��̉t����ѐ��䈤�(������������������	��	��������l����	��Mх��̝u���l����	��]��I�є�u������ݡ�є���(������������������1��ѥ���"������l����ѥ��EՅ����M��ɔ�u��������������Ј��(�����������������������*�􈰈�
-܀��������l������ɕ̉ul��t�����ф͈����(��������������t(������������t��(����������𽑥��(��������𽑥��(�������������չͅ��}�����}�ѵ��Q�Ք�((����ݥѠ����}͍�ɔ�(����������	ե���͍�ɔ����́!Q50(������������}�ѵ��􀈈(����������ȁ�������ф�(������������͌��͍�ɕ�m�l����ut(����������������l�����t(��������������Ѐ�ɽչ��͌������������(��������������}��������х���}�����Ф(���������������}����Ȁ􁍽���}���m��}�����t(����������������}�ѵ���􁘈��(�������������؁��屔􉑥�����陱��텱�����ѕ��鍕�ѕ�흅��������ɝ��bottom:6px">
+    <div class="diag-topbar" style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:20px;height:20px;background:#3b82f6;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px">📦</div>
+        <span style="font-size:14px;font-weight:800;color:white;letter-spacing:-0.3px">AsinDiag</span>
+        <span style="font-size:12px;color:#64748b">Amazon 卖家运营诊断工具</span>
+      </div>
+      <span style="font-size:11px;color:#64748b">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-right:5px"></span>
+        模拟数据模式 · 可替换为真实 API 数据
+      </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# OVERVIEW
+# ─────────────────────────────────────────────────────────────
+
+def render_overview(asin):
+    p = MOCK["product"]
+    scores = MOCK["scores"]
+    meta = MOCK["scoreMeta"]
+    total = scores["total"]
+    overall = status_of(total)
+    color_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+    ring_color = color_map[overall]
+
+    st.markdown('<div style="padding:0 24px 0 24px">', unsafe_allow_html=True)
+
+    # Row 1: ASIN info + Health Score
+    col_info, col_score = st.columns([7, 5])
+
+    with col_info:
+        st.markdown(f"""
+        <div class="diag-card">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);padding:2px 8px;border-radius:4px;font-size:11px;font-family:monospace">{p['asin']}</span>
+            <span style="font-size:11px;color:#64748b">{p['category']}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:white;line-height:1.5;margin-bottom:14px">{p['title']}</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            {''.join([
+              f'<div class="p-card"><div class="diag-label">{l}</div><div style="font-size:13px;font-weight:600;color:{c}">{v}</div></div>'
+              for l,v,c in [
+                ("品牌",p["brand"],"#60a5fa"),
+                ("价格",f"${p['price']}","white"),
+                ("评分/评论",f"{p['rating']}★ / {p['reviewCount']:,}","#fbbf24"),
+                ("BSR",f"#{p['bsr']}","#f87171"),
+                ("库存",p["inventoryStatus"],"#34d399"),
+                ("Buy Box",f"{p['buyBoxStatus']} ({p['buyBoxWinRate']}%)","white"),
+                ("Listing分",f"{p['listingQualityScore']}/100","#fbbf24"),
+                ("核心功能"," · ".join(p["features"][:2]),"#94a3b8"),
+              ]
+            ])}
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_score:
+        # Build score bars HTML
+        bars_html = ""
+        for m in meta:
+            sc = scores[m["key"]]
+            mx = m["max"]
+            pct = round(sc / mx * 100)
+            st_label = status_of(pct)
+            bar_color = color_map[st_label]
+            bars_html += f"""
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <div style="width:88px;font-size:10px;color:#94a3b8;text-align:right;flex-shrink:0">{m['label']}</div>
               <div style="flex:1;height:5px;background:#1e293b;border-radius:3px;overflow:hidden">
                 <div style="height:100%;width:{pct}%;background:{bar_color};border-radius:3px"></div>
@@ -392,10 +452,10 @@ def render_category():
             orientation="h",
             marker=dict(color=["#34d399" if b["brand"]=="SoundMax" else "#3b82f6" for b in brands]),
         ))
-        fig2.update_layout(dark_layout(title="类目品牌份额分布 (%)", height=200, xaxis_title="市场份额 (%)"))
+        fig2.update_layout(dark_layout(title="类目lk�牌份额分布 (%)", height=200, xaxis_title="市场份额 (%)"))
         st.plotly_chart(fig2, use_container_width=True, config=plotly_cfg())
 
-        st.markdown(judgment("销量趋势7日连续下滑，当前份额1.5%低于类目均值；类目整体保持增长，品类需求健康。"), unsafe_allow_html=True)
+        st.markdown(judgment("销量趋势7日连续下滑，当前份额1.5%低于类目e��值；类目f��体保持增长，品类需求健康。"), unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
         st.markdown(action_list([
             "立即检查是否有差评或 Q&A 影响转化",
