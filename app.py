@@ -1,705 +1,834 @@
-"""
-ASIN Dashboard — Streamlit 版本
-分享方式：推送到 GitHub → 部署到 share.streamlit.io（免费）
-"""
 import streamlit as st
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
-from datetime import datetime, timedelta
-import api  # api.py 同目录
+import time
 
-# ═══════════════════════════════════════════════════════════════
-#  页面配置
-# ═══════════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="ASIN Dashboard",
+    page_title="AsinDiag · Amazon 运营诊断工具",
     page_icon="📦",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ── 自定义 CSS ──────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# GLOBAL CSS  — dark, high-tech SaaS theme
+# ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-  #MainMenu, footer, header { visibility: hidden; }
-  [data-testid="metric-container"] {
-    background: #ffffff;
-    border: 1px solid #e8ecf0;
-    border-radius: 14px;
-    padding: 18px 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
-  }
-  [data-testid="stMetricLabel"] { font-size: 12px; color: #64748b; font-weight: 500; }
-  [data-testid="stMetricValue"] { font-size: 26px; font-weight: 700; color: #0f172a; }
-  [data-testid="stMetricDelta"] { font-size: 12px; }
-  hr { margin: 8px 0; border-color: #f1f5f9; }
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-size: 11px;
-    font-weight: 600;
-    margin-right: 4px;
-  }
-  .badge-prime { background: #dbeafe; color: #1d4ed8; }
-  .badge-fba   { background: #fef3c7; color: #92400e; }
-  .badge-asin  { background: #ede9fe; color: #5b21b6; font-family: monospace; }
-  .product-header {
-    background: white;
-    border: 1px solid #e8ecf0;
-    border-radius: 16px;
-    padding: 20px 24px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
-    margin-bottom: 16px;
-  }
-  .comp-row {
-    background: white;
-    border: 1px solid #f1f5f9;
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-  }
-  .score-bar-wrap { background:#f1f5f9; border-radius:99px; height:10px; margin:6px 0; }
-  .score-bar      { height:10px; border-radius:99px; }
-  .priority-critical { color:#dc2626; font-weight:700; }
-  .priority-high     { color:#ea580c; font-weight:600; }
-  .priority-medium   { color:#d97706; font-weight:600; }
-  .priority-low      { color:#2563eb; font-weight:500; }
-  .priority-ok       { color:#16a34a; font-weight:500; }
+[data-testid="stAppViewContainer"] { background:#0f172a !important; }
+[data-testid="stHeader"]  { display:none !important; }
+[data-testid="stToolbar"] { display:none !important; }
+footer { display:none !important; }
+.block-container { padding:0 !important; max-width:100% !important; }
+
+/* inputs */
+[data-testid="stTextInput"] input {
+  background:#1e293b !important; color:#e2e8f0 !important;
+  border:1px solid #475569 !important; border-radius:8px !important;
+}
+[data-testid="stSelectbox"] > div > div {
+  background:#1e293b !important; color:#e2e8f0 !important;
+  border:1px solid #475569 !important; border-radius:8px !important;
+}
+[data-testid="stRadio"] label { color:#cbd5e1 !important; }
+button[kind="primary"], .stButton > button {
+  background:#3b82f6 !important; color:white !important;
+  border:none !important; border-radius:8px !important; font-weight:600 !important;
+}
+.stButton > button:hover { background:#2563eb !important; }
+
+/* expanders */
+[data-testid="stExpander"] {
+  background:rgba(30,41,59,0.4) !important;
+  border:1px solid rgba(71,85,105,0.6) !important; border-radius:12px !important;
+}
+[data-testid="stExpander"] summary { color:#e2e8f0 !important; font-weight:600 !important; }
+[data-testid="stExpander"] summary:hover { color:#93c5fd !important; }
+
+/* tabs */
+[data-testid="stTabs"] [role="tablist"] { background:#1e293b; border-radius:8px; padding:2px; border:1px solid #334155; }
+[data-testid="stTabs"] [role="tab"] { color:#94a3b8 !important; border-radius:6px; }
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] { background:#3b82f6 !important; color:white !important; }
+
+/* metrics */
+[data-testid="metric-container"] { background:rgba(30,41,59,0.5); border:1px solid rgba(71,85,105,0.6); border-radius:8px; padding:12px; }
+[data-testid="stMetricLabel"] { color:#94a3b8 !important; font-size:11px !important; }
+[data-testid="stMetricValue"] { color:#f1f5f9 !important; font-size:20px !important; }
+[data-testid="stMetricDelta"] { font-size:11px !important; }
+
+/* dataframe */
+[data-testid="stDataFrame"] { background:#1e293b !important; border-radius:8px; overflow:hidden; }
+.stDataFrame thead tr th { background:#334155 !important; color:#94a3b8 !important; font-size:11px !important; font-weight:500 !important; }
+.stDataFrame tbody tr td { color:#cbd5e1 !important; font-size:12px !important; background:#1e293b !important; }
+.stDataFrame tbody tr:hover td { background:#263548 !important; }
+
+/* plotly dark */
+.js-plotly-plot .plotly .bg { fill:#0f172a !important; }
+
+/* scrollbar */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:#1e293b; }
+::-webkit-scrollbar-thumb { background:#475569; border-radius:3px; }
+
+/* custom components */
+.diag-topbar { background:rgba(15,23,42,0.97); border-bottom:1px solid rgba(71,85,105,0.6); padding:10px 24px; }
+.diag-card   { background:rgba(30,41,59,0.4); border:1px solid rgba(71,85,105,0.6); border-radius:12px; padding:16px; }
+.diag-label  { font-size:11px; color:#94a3b8; margin-bottom:3px; }
+.diag-val    { font-size:18px; font-weight:700; color:#f1f5f9; }
+.diag-sub    { font-size:11px; color:#64748b; margin-top:2px; }
+.diag-highlight { border-color:rgba(245,158,11,0.5) !important; background:rgba(245,158,11,0.06) !important; }
+
+.badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; border-width:1px; border-style:solid; }
+.badge-excellent { background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(52,211,153,0.4); }
+.badge-good      { background:rgba(59,130,246,0.15); color:#60a5fa; border-color:rgba(96,165,250,0.4); }
+.badge-normal    { background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(251,191,36,0.4); }
+.badge-bad       { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
+.badge-opp       { background:rgba(59,130,246,0.15); color:#60a5fa; border-color:rgba(96,165,250,0.4); }
+.badge-risk      { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
+.badge-stable    { background:rgba(100,116,139,0.2); color:#94a3b8; border-color:rgba(148,163,184,0.3); }
+.badge-warn      { background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(251,191,36,0.4); }
+.badge-abn       { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
+
+.judge-warn { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:10px 14px; font-size:12px; color:#fcd34d; margin:10px 0; }
+.judge-info { background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:10px 14px; font-size:12px; color:#93c5fd; margin:10px 0; }
+
+.adv-card { background:rgba(16,185,129,0.06); border:1px solid rgba(52,211,153,0.25); border-radius:8px; padding:12px; }
+.dis-card { background:rgba(239,68,68,0.06); border:1px solid rgba(248,113,113,0.25); border-radius:8px; padding:12px; }
+.risk-box { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:10px 14px; font-size:12px; color:#fcd34d; }
+.prio-box { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.25); border-radius:8px; padding:10px 14px; font-size:12px; color:#93c5fd; }
+
+.action-row { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
+.action-icon { color:#60a5fa; margin-top:1px; flex-shrink:0; }
+
+.score-ring-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.score-num { font-size:28px; font-weight:800; }
+.score-label { font-size:10px; color:#64748b; }
+
+.p-card { background:rgba(30,41,59,0.4); border-radius:8px; padding:10px; }
+
+.tbl-wrapper { overflow-x:auto; border-radius:8px; border:1px solid rgba(71,85,105,0.5); }
+table.dtbl { width:100%; border-collapse:collapse; font-size:12px; }
+table.dtbl th { background:rgba(51,65,85,0.6); color:#94a3b8; padding:8px 12px; text-align:left; font-weight:500; border-bottom:1px solid rgba(71,85,105,0.5); white-space:nowrap; }
+table.dtbl td { padding:8px 12px; color:#cbd5e1; border-bottom:1px solid rgba(71,85,105,0.35); }
+table.dtbl tr:hover td { background:rgba(51,65,85,0.3); }
+table.dtbl .ours td { background:rgba(59,130,246,0.06); }
+.red-val { color:#f87171; font-weight:700; }
+.green-val { color:#34d399; font-weight:700; }
+.amber-val { color:#fbbf24; font-weight:700; }
+.blue-val { color:#60a5fa; }
+
+.plan-card { border-radius:12px; padding:20px; }
+.plan-a { background:rgba(59,130,246,0.06); border:1px solid rgba(96,165,250,0.3); }
+.plan-b { background:rgba(16,185,129,0.06); border:1px solid rgba(52,211,153,0.3); }
+.p0 { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(248,113,113,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
+.p1 { background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
+.p2 { background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(96,165,250,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
+
+hr.diag-divider { border:none; border-top:1px solid rgba(71,85,105,0.4); margin:12px 0; }
 </style>
 """, unsafe_allow_html=True)
 
+# ─────────────────────────────────────────────────────────────
+# MOCK DATA  — replace sections with real API calls
+# ─────────────────────────────────────────────────────────────
+MOCK = {
+    "product": {
+        "asin": "B0D54LVZK5",
+        "title": "SoundMax Pro X1 Portable Bluetooth Speaker, 360° Surround Sound, 24H Battery, IPX7 Waterproof, Dual Pairing, USB-C Charging",
+        "brand": "SoundMax",
+        "category": "Bluetooth Speakers",
+        "price": 45.99, "rating": 4.2, "reviewCount": 1247,
+        "inventoryStatus": "In Stock", "buyBoxStatus": "Won", "buyBoxWinRate": 94,
+        "listingQualityScore": 72, "bsr": 247,
+        "features": ["IPX7 Waterproof","24H Battery","360° Sound","Dual Pairing","USB-C"],
+    },
+    "scores": {"category":9,"brand":7,"competition":13,"keywords":14,"ads":14,"listing":10,"total":67},
+    "scoreMeta": [
+        {"key":"category",    "label":"品类表现",     "max":15},
+        {"key":"brand",       "label":"品牌表现",     "max":10},
+        {"key":"competition", "label":"竞品竞争力",   "max":20},
+        {"key":"keywords",    "label":"关键词能力",   "max":20},
+        {"key":"ads",         "label":"广告效率",     "max":20},
+        {"key":"listing",     "label":"Listing&评论", "max":15},
+    ],
+    "trend_dates":   ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"],
+    "our_sales":     [42, 38, 45, 41, 37, 34, 33],
+    "cat_avg":       [35, 36, 38, 37, 38, 37, 39],
+    "top10_avg":     [180,185,190,188,192,189,195],
+    "cat_share":     [1.9,1.8,2.0,1.8,1.7,1.5,1.5],
+    "top_brands": [
+        {"brand":"Anker",    "share":18.2},
+        {"brand":"JBL",      "share":14.5},
+        {"brand":"Sony",     "share":9.8},
+        {"brand":"Bose",     "share":8.1},
+        {"brand":"Tribit",   "share":6.4},
+        {"brand":"SoundMax", "share":4.2},
+    ],
+    "brand_trend": [
+        {"date":"6/24","brandIdx":100,"catIdx":100},
+        {"date":"6/25","brandIdx":93, "catIdx":103},
+        {"date":"6/26","brandIdx":106,"catIdx":106},
+        {"date":"6/27","brandIdx":98, "catIdx":103},
+        {"date":"6/28","brandIdx":90, "catIdx":105},
+        {"date":"6/29","brandIdx":82, "catIdx":104},
+        {"date":"6/30","brandIdx":80, "catIdx":107},
+    ],
+    "competitors": [
+        {"asin":"B0D54LVZK5","brand":"SoundMax","price":45.99,"discount":8, "rating":4.2,"reviews":1247,  "sales":980,  "budget":"$2,847","lscore":72,"bsr":247, "ours":True},
+        {"asin":"B08N5WRWNW","brand":"Anker",   "price":35.99,"discount":0, "rating":4.6,"reviews":15420, "sales":2840, "budget":"$8,200","lscore":91,"bsr":12,  "ours":False},
+        {"asin":"B07FZ8S74R","brand":"JBL",     "price":59.95,"discount":15,"rating":4.5,"reviews":8520,  "sales":1650, "budget":"$5,400","lscore":88,"bsr":28,  "ours":False},
+        {"asin":"B09B8ZCPKQ","brand":"Sony",    "price":39.99,"discount":10,"rating":4.3,"reviews":6240,  "sales":1240, "budget":"$3,800","lscore":85,"bsr":45,  "ours":False},
+        {"asin":"B08CXVYZ2J","brand":"Tribit",  "price":39.99,"discount":5, "rating":4.4,"reviews":12180, "sales":1890, "budget":"$4,200","lscore":86,"bsr":22,  "ours":False},
+        {"asin":"B09G9WV99B","brand":"Bose",    "price":89.00,"discount":0, "rating":4.6,"reviews":4120,  "sales":820,  "budget":"$2,100","lscore":93,"bsr":68,  "ours":False},
+    ],
+    "keywords": [
+        {"kw":"bluetooth speaker",          "vol":450000,"trend":"↑","org":18,"spn":5, "chg":-3,"cov":5,"opp":82,"status":"opp"},
+        {"kw":"portable bluetooth speaker", "vol":180000,"trend":"→","org":32,"spn":8, "chg":-2,"cov":5,"opp":74,"status":"opp"},
+        {"kw":"small bluetooth speaker",    "vol":85000, "trend":"↑","org":12,"spn":3, "chg": 2,"cov":4,"opp":88,"status":"good"},
+        {"kw":"waterproof bluetooth speaker","vol":120000,"trend":"↑","org":45,"spn":15,"chg":-5,"cov":5,"opp":65,"status":"risk"},
+        {"kw":"outdoor bluetooth speaker",  "vol":65000, "trend":"↑","org":22,"spn":6, "chg": 1,"cov":3,"opp":79,"status":"stable"},
+    ],
+    "ads_summary": {"spend":2847,"impressions":145000,"clicks":3480,"ctr":2.4,"cvr":8.97,"cpc":0.82,"conv":312,"acos":28.5,"roas":3.51},
+    "campaigns": [
+        {"name":"SP - Exact - Core KWs","spend":1240,"impr":68000,"clicks":1680,"ctr":2.47,"cvr":9.4, "acos":24.8,"roas":4.03,"health":"good"},
+        {"name":"SP - Broad - Discovery","spend":890, "impr":52000,"clicks":1140,"ctr":2.19,"cvr":7.63,"acos":32.4,"roas":3.09,"health":"warn"},
+        {"name":"SP - Auto Campaign",   "spend":717, "impr":25000,"clicks":660, "ctr":2.64,"cvr":10.15,"acos":33.8,"roas":2.96,"health":"warn"},
+    ],
+    "ad_kws": [
+        {"kw":"bluetooth speaker",       "spend":420,"clicks":510,"ctr":3.1,"cpc":0.82,"conv":48,"cvr":9.41, "acos":27.7,"status":"stable"},
+        {"kw":"portable speaker",        "spend":285,"clicks":340,"ctr":2.5,"cpc":0.84,"conv":28,"cvr":8.24, "acos":32.1,"status":"warn"},
+        {"kw":"small bluetooth speaker", "spend":198,"clicks":245,"ctr":3.8,"cpc":0.81,"conv":31,"cvr":12.65,"acos":20.1,"status":"opp"},
+        {"kw":"waterproof speaker",      "spend":312,"clicks":280,"ctr":1.9,"cpc":1.11,"conv":18,"cvr":6.43, "acos":54.9,"status":"abn"},
+        {"kw":"outdoor speaker",         "spend":156,"clicks":198,"ctr":2.7,"cpc":0.79,"conv":22,"cvr":11.11,"acos":22.4,"status":"opp"},
+        {"kw":"360 bluetooth speaker",   "spend":89, "clicks":112,"ctr":2.2,"cpc":0.79,"conv":8, "cvr":7.14, "acos":35.1,"status":"warn"},
+        {"kw":"ipx7 speaker",            "spend":64, "clicks":78, "ctr":1.6,"cpc":0.82,"conv":4, "cvr":5.13, "acos":50.3,"status":"abn"},
+    ],
+}
 
-# ═══════════════════════════════════════════════════════════════
-#  API Keys
-# ═══════════════════════════════════════════════════════════════
-def get_api_keys():
-    rf_key = st.secrets.get("RAINFOREST_API_KEY", "") if hasattr(st, "secrets") else ""
-    ka_key = st.secrets.get("KEEPA_API_KEY", "") if hasattr(st, "secrets") else ""
+# ─────────────────────────────────────────────────────────────
+# HELPER FUNCTIONS
+# ─────────────────────────────────────────────────────────────
 
-    with st.sidebar:
-        st.markdown("### 🔑 API Keys")
-        st.caption("已在 secrets 中配置则无需手动填写")
-        rf_key = st.text_input("Rainforest API Key", value=rf_key, type="password")
-        ka_key = st.text_input("Keepa API Key", value=ka_key, type="password")
-        st.divider()
-        st.markdown("### 📖 使用说明")
-        st.markdown("""
-1. 在上方输入 ASIN（10位字母数字）
-2. 点击 **查询** 按钮
-3. 数据约需 **3–8 秒** 加载
+def status_of(score):
+    if score >= 90: return "优秀"
+    if score >= 75: return "较好"
+    if score >= 60: return "正常"
+    return "异常"
 
-**数据来源**
-- 🟢 Rainforest API：实时商品页
-- 🟠 Keepa API：7天历史/90天统计
+def badge_html(s):
+    cls_map = {
+        "优秀":"badge-excellent","较好":"badge-good","正常":"badge-normal","异常":"badge-bad",
+        "opp":"badge-opp","good":"badge-excellent","stable":"badge-stable",
+        "risk":"badge-risk","warn":"badge-warn","abn":"badge-abn",
+    }
+    label_map = {
+        "优秀":"优秀","较好":"较好","正常":"正常","异常":"异常",
+        "opp":"机会","good":"良好","stable":"稳定","risk":"风险","warn":"待优化","abn":"异常",
+    }
+    cls = cls_map.get(s, "badge-stable")
+    label = label_map.get(s, s)
+    return f'<span class="badge {cls}"><span style="width:6px;height:6px;border-radius:50%;display:inline-block;background:currentColor;opacity:.7"></span>{label}</span>'
 
-**分享**：部署到 [Streamlit Cloud](https://share.streamlit.io)，生成公开链接
-        """)
-    return rf_key, ka_key
+def metric_card(label, value, unit="", sub="", highlight=False):
+    hl = " diag-highlight" if highlight else ""
+    return f"""
+    <div class="diag-card{hl}" style="margin-bottom:0">
+      <div class="diag-label">{label}</div>
+      <div class="diag-val">{value}<span style="font-size:11px;color:#94a3b8;font-weight:400;margin-left:2px">{unit}</span></div>
+      {f'<div class="diag-sub">{sub}</div>' if sub else ''}
+    </div>"""
 
+def action_list(actions):
+    rows = "".join(f'<div class="action-row"><span class="action-icon">→</span><span style="font-size:12px;color:#cbd5e1">{a}</span></div>' for a in actions)
+    return f'<div style="margin-top:8px">{rows}</div>'
 
-# ═══════════════════════════════════════════════════════════════
-#  缓存 API 调用（相同 ASIN 5分钟内不重复请求）
-# ═══════════════════════════════════════════════════════════════
-@st.cache_data(ttl=300, show_spinner=False)
-def load_data(asin: str, rf_key: str, ka_key: str):
-    errors = {}
+def judgment(text, t="warn"):
+    cls = "judge-warn" if t == "warn" else "judge-info"
+    icon = "⚠" if t == "warn" else "ℹ"
+    return f'<div class="{cls}">{icon}&nbsp; {text}</div>'
 
-    # Rainforest: 商品 + 竞对
-    product, competitors = {}, []
-    try:
-        product = api.fetch_product(asin, rf_key)
-        if product.get("brand"):
-            search_term = f"{product['brand']} {product.get('bsr_category', 'product')}"
-            try:
-                competitors = api.fetch_competitors(search_term, rf_key, asin)
-            except Exception as e:
-                errors["competitors"] = str(e)
-    except Exception as e:
-        errors["rainforest"] = str(e)
+def plotly_cfg():
+    return dict(displayModeBar=False, responsive=True)
 
-    # Keepa: 历史趋势
-    keepa = {}
-    try:
-        keepa = api.fetch_keepa(asin, ka_key)
-    except Exception as e:
-        errors["keepa"] = str(e)
-
-    # 关键词排名
-    kw_data = []
-    try:
-        title = product.get("title", "")
-        brand = product.get("brand", "")
-        if title:
-            keywords = api.extract_keywords(title, brand)
-            comp_asins = [c["asin"] for c in competitors if c.get("asin")]
-            kw_data = api.fetch_keyword_rankings(asin, keywords, comp_asins, rf_key)
-    except Exception as e:
-        errors["keywords"] = str(e)
-
-    # Listing 优化评分
-    listing = {}
-    try:
-        comp_prices = [c["price"] for c in competitors if c.get("price")]
-        listing = api.generate_listing_score(product, comp_prices)
-    except Exception as e:
-        errors["listing"] = str(e)
-
-    return product, keepa, competitors, kw_data, listing, errors
-
-
-# ═══════════════════════════════════════════════════════════════
-#  图表工具函数
-# ═══════════════════════════════════════════════════════════════
-def last_7_days_labels():
-    today = datetime.today()
-    return [(today - timedelta(days=6 - i)).strftime("%-m/%-d") for i in range(7)]
-
-
-def trend_chart(values: list, labels: list, title: str, color: str,
-                y_format: str = "${:.2f}", reverse_color: bool = False):
-    """Plotly 折线趋势图，None 值显示断点"""
-    has_data = any(v is not None for v in values)
-
-    if not has_data:
-        fig = go.Figure()
-        fig.add_annotation(text="暂无历史数据", xref="paper", yref="paper",
-                           x=0.5, y=0.5, showarrow=False,
-                           font=dict(size=13, color="#94a3b8"))
-    else:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=labels, y=values,
-            mode="lines+markers",
-            line=dict(color=color, width=2.5, shape="spline"),
-            marker=dict(size=6, color=color,
-                        line=dict(width=2, color="white")),
-            connectgaps=False,
-            hovertemplate="%{x}<br>" + title + ": " +
-                          ("%{y:,.0f}" if "BSR" in title else "$%{y:.2f}") +
-                          "<extra></extra>",
-        ))
-
-        clean = [v for v in values if v is not None]
-        if len(clean) >= 2:
-            pct = (clean[-1] - clean[0]) / clean[0] * 100
-            if reverse_color:
-                arrow = "▲ 排名提升" if pct < 0 else "▼ 排名下降"
-                arrow_color = "#22c55e" if pct < 0 else "#ef4444"
-            else:
-                arrow = f"↑ +{abs(pct):.1f}%" if pct > 0 else f"↓ {abs(pct):.1f}%"
-                arrow_color = "#22c55e" if pct > 0 else "#ef4444"
-            fig.add_annotation(
-                text=f"<b>{arrow}</b>",
-                xref="paper", yref="paper", x=1.0, y=1.08,
-                showarrow=False, xanchor="right",
-                font=dict(size=12, color=arrow_color),
-            )
-
-    fig.update_layout(
-        title=dict(text=title, font=dict(size=13, color="#374151"), x=0),
-        margin=dict(l=0, r=0, t=36, b=0),
-        height=180,
-        paper_bgcolor="white", plot_bgcolor="white",
-        xaxis=dict(showgrid=False, tickfont=dict(size=11, color="#94a3b8")),
-        yaxis=dict(showgrid=True, gridcolor="#f1f5f9",
-                   tickfont=dict(size=11, color="#94a3b8"),
-                   tickformat=",.0f" if "BSR" in title else "$.2f"),
-        showlegend=False,
-        hoverlabel=dict(bgcolor="#1e293b", font_color="white", font_size=12),
+def dark_layout(**kwargs):
+    base = dict(
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
+        font=dict(color="#94a3b8", size=11),
+        margin=dict(l=10,r=10,t=30,b=10),
+        xaxis=dict(gridcolor="#1e293b", linecolor="#334155", tickfont=dict(size=10)),
+        yaxis=dict(gridcolor="#1e293b", linecolor="#334155", tickfont=dict(size=10)),
+        legend=dict(font=dict(size=10), bgcolor="rgba(0,0,0,0)"),
+        hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155", font=dict(color="#e2e8f0", size=11)),
     )
-    return fig
+    base.update(kwargs)
+    return base
 
+def pct_color(v):
+    if v > 0: return "#34d399"
+    if v < 0: return "#f87171"
+    return "#94a3b8"
 
-def price_range_gauge(current, p_min, p_avg, p_max):
-    """90天价格位置仪表盘"""
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number+delta",
-        value=current or 0,
-        delta={"reference": p_avg, "valueformat": ".2f",
-               "prefix": "均价Delta$", "increasing": {"color": "#ef4444"},
-               "decreasing": {"color": "#22c55e"}},
-        number={"prefix": "$", "valueformat": ".2f",
-                "font": {"size": 28, "color": "#0f172a"}},
-        gauge={
-            "axis": {"range": [p_min, p_max], "tickformat": "$.0f",
-                     "tickfont": {"size": 10}},
-            "bar": {"color": "#6366f1", "thickness": 0.3},
-            "bgcolor": "white",
-            "steps": [
-                {"range": [p_min, p_avg], "color": "#d1fae5"},
-                {"range": [p_avg, p_max], "color": "#fee2e2"},
-            ],
-            "threshold": {
-                "line": {"color": "#f59e0b", "width": 3},
-                "thickness": 0.75,
-                "value": p_avg,
-            },
-        },
-    ))
-    fig.update_layout(
-        height=160, margin=dict(l=20, r=20, t=10, b=0),
-        paper_bgcolor="white",
-        font={"color": "#374151"},
-    )
-    return fig
+# ─────────────────────────────────────────────────────────────
+# TOP BAR
+# ─────────────────────────────────────────────────────────────
 
+def render_topbar():
+    st.markdown("""
+    <div class="diag-topbar" style="display:flex;align-items:center;justify-contѕ������������ݕ����(�������؁��屔􉑥�����陱��텱�����ѕ��鍕�ѕ�흅��������(���������؁��屔�ݥ�Ѡ�����������������퉅���ɽչ��͈�ɘ�퉽ɑ�ȵɅ��������푥�����陱��텱�����ѕ��鍕�ѕ�����ѥ�䵍��ѕ��鍕�ѕ�홽�еͥ���������~N�𽑥��(����������������屔􉙽�еͥ������홽�еݕ��������퍽����ݡ�є����ѕȵ���������������ͥ����������(����������������屔􉙽�еͥ������퍽��������ለ���齸��6[��ۢ�C�B���+�Z��ޗ��������(������𽑥��(��������������屔􉙽�еͥ������퍽��������ለ�(����������������屔􉑥�����饹�����������ݥ�Ѡ���������������퉽ɑ�ȵɅ��������퉅���ɽչ�荘�������ɝ���ɥ���������������(������������.�VÚ6������<�
+܃�>��n��6����r��x�A$��VÚ6�(������������(����𽑥��(���������չͅ��}�����}�ѵ��Q�Ք�((���R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R (��=YIY%\(���R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R�R ()����ɕ����}�ٕ�٥�ܡ�ͥ���(�������5=
+-l��ɽ�ՍЉt(����͍�ɕ̀�5=
+-l�͍�ɕ̉t(������ф��5=
+-l�͍�ɕ5�ф�t(����ѽх���͍�ɕ�l�ѽх��t(�����ٕɅ�����х���}���ѽх��(���������}�����싒�c�� �舌�ѐ��䈰������舌���ՙ�����������舍�����Ј��������舍�����ĉ�(����ɥ��}����Ȁ􁍽���}���m�ٕɅ��t((�����й��ɭ��ݸ���؁��屔���������������������������չͅ��}�����}�ѵ��Q�Ք�((������I�܀��M%8��������!���Ѡ�M��ɔ(�������}���������}͍�ɔ���й���յ�̡lܰ��t�((����ݥѠ����}�����(���������й��ɭ��ݸ�����(���������؁�����􉑥�����ɐ��(�����������؁��屔􉑥�����陱��텱�����ѕ��鍕�ѕ�흅��������ɝ������ѽ�������(��������������������屔􉉅���ɽչ��ɝ�����������ذ��Ȥ퍽�������ՙ�퉽ɑ�������ͽ����ɝ����ذ��԰������Ф����������������퉽ɑ�ȵɅ��������홽�еͥ������홽�е������鵽�����������l��ͥ��u�������(��������������������屔􉙽�еͥ������퍽��������ለ���l���ѕ����u�������(����������𽑥��(�����������؁��屔􉙽�еͥ������홽�еݕ��������퍽����ݡ�є�������������ĸ����ɝ������ѽ����������l�ѥѱ��u�𽑥��(�����������؁��屔􉑥������ɥ��ɥ��ѕ����є����յ���ɕ���РаřȤ흅�������(������������윜������l(�����������������؁����������ɐ���؁�����􉑥�������������𽑥���؁��屔􉙽�еͥ������홽�еݕ��������퍽����������𽑥��𽑥���(����������������ȁ��ر�����l(�������������������N�&0���l��Ʌ���t������ՙ����(��������������������ߚ���������l��ɥ���u􈰉ݡ�є���(���������������������"�����舱����l�Ʌѥ���u��b�����l�ɕ٥��
+�չНt�􈰈������Ј��(������������������	MH�������l���ȝu􈰈������Ĉ��(��������������������O��`���l���ٕ�ѽ��Mх��̉t����ѐ��䈤�(������������������	��	��������l����	��Mх��̝u���l����	��]��I�є�u������ݡ�є���(������������������1��ѥ���"������l����ѥ��EՅ����M��ɔ�u��������������Ј��(�����������������������*�􈰈�
+܀��������l������ɕ̉ul��t�����ф͈����(��������������t(������������t��(����������𽑥��(��������𽑥��(�������������չͅ��}�����}�ѵ��Q�Ք�((����ݥѠ����}͍�ɔ�(����������	ե���͍�ɔ����́!Q50(������������}�ѵ��􀈈(����������ȁ�������ф�(������������͌��͍�ɕ�m�l����ut(����������������l�����t(��������������Ѐ�ɽչ��͌������������(��������������}��������х���}�����Ф(���������������}����Ȁ􁍽���}���m��}�����t(����������������}�ѵ���􁘈��(�������������؁��屔􉑥�����陱��텱�����ѕ��鍕�ѕ�흅��������ɝ��bottom:6px">
+              <div style="width:88px;font-size:10px;color:#94a3b8;text-align:right;flex-shrink:0">{m['label']}</div>
+              <div style="flex:1;height:5px;background:#1e293b;border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:{pct}%;background:{bar_color};border-radius:3px"></div>
+              </div>
+              <div style="font-size:10px;color:{bar_color};font-weight:600;width:42px">{sc}/{mx}</div>
+            </div>"""
 
-# ═══════════════════════════════════════════════════════════════
-#  主界面渲染
-# ═══════════════════════════════════════════════════════════════
-def render_product_header(asin, product, keepa):
-    price = product.get("current_price") or keepa.get("current_price")
-    rating = product.get("rating") or keepa.get("rating")
-    reviews = product.get("review_count") or keepa.get("review_count")
-    is_prime = product.get("is_prime", False)
-    is_fba = product.get("is_fba", False)
-    title = product.get("title") or f"ASIN: {asin}"
-    brand = product.get("brand", "")
-    img = product.get("main_image", "")
-
-    col_img, col_info = st.columns([1, 5])
-    with col_img:
-        if img:
-            st.image(img, width=120)
-    with col_info:
-        badges = f'<span class="badge badge-asin">{asin}</span>'
-        if is_prime:
-            badges += '<span class="badge badge-prime">Prime</span>'
-        if is_fba:
-            badges += '<span class="badge badge-fba">FBA</span>'
-        st.markdown(badges, unsafe_allow_html=True)
-        st.markdown(f"### {title}")
-
-        meta_parts = []
-        if brand:
-            meta_parts.append(f"**{brand}**")
-        if rating:
-            stars = "⭐" * int(round(rating))
-            meta_parts.append(f"{stars} {rating}")
-        if reviews:
-            meta_parts.append(f"{reviews:,} 条评论")
-        if product.get("variant_count"):
-            meta_parts.append(f"{product['variant_count']} 个变体")
-        if product.get("img_count"):
-            meta_parts.append(f"{product['img_count']} 张图片")
-        st.caption("  ·  ".join(meta_parts))
-
-
-def render_metrics(product, keepa):
-    price = product.get("current_price") or keepa.get("current_price")
-    bsr = product.get("bsr") or keepa.get("current_bsr")
-    reviews = product.get("review_count") or keepa.get("review_count")
-    rating = product.get("rating") or keepa.get("rating")
-    monthly = keepa.get("monthly_sold")
-    p_min = keepa.get("price_90d_min")
-    p_max = keepa.get("price_90d_max")
-
-    c1, c2, c3, c4, c5 = st.columns(5)
-
-    with c1:
-        delta = None
-        if price and p_min:
-            delta = f"较90日低点 +${price - p_min:.2f}"
-        st.metric("💰 当前价格", f"${price:.2f}" if price else "—", delta=delta)
-
-    with c2:
-        bsr_cat = (product.get("bsr_category") or "")[:18]
-        st.metric("📊 BSR 排名", f"#{bsr:,}" if bsr else "—",
-                  delta=bsr_cat or None)
-
-    with c3:
-        st.metric("⭐ 综合评分", f"{rating} / 5.0" if rating else "—",
-                  delta=f"{reviews:,} 条评论" if reviews else None)
-
-    with c4:
-        st.metric("📦 月销量估算", f"~{monthly:,} 件" if monthly else "—",
-                  delta="来源：Keepa")
-
-    with c5:
-        avg = keepa.get("price_90d_avg")
-        st.metric("📈 90日均价", f"${avg:.2f}" if avg else "—",
-                  delta=f"区间 ${p_min:.2f}–${p_max:.2f}" if p_min and p_max else None)
-
-
-def render_trends(keepa):
-    price_7d = keepa.get("price_7d", [None] * 7)
-    bsr_7d = keepa.get("bsr_7d", [None] * 7)
-    labels = last_7_days_labels()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        with st.container(border=True):
-            st.plotly_chart(
-                trend_chart(price_7d, labels, "7天价格趋势", "#6366f1"),
-                use_container_width=True, config={"displayModeBar": False},
-            )
-    with col2:
-        with st.container(border=True):
-            st.plotly_chart(
-                trend_chart(bsr_7d, labels, "7天 BSR 趋势（主类目）",
-                            "#f59e0b", reverse_color=True),
-                use_container_width=True, config={"displayModeBar": False},
-            )
-
-    with st.expander("📋 7天逐日明细", expanded=False):
-        rows = []
-        for i, day in enumerate(labels):
-            p = price_7d[i]
-            b = bsr_7d[i]
-            rows.append({
-                "日期": day,
-                "价格": f"${p:.2f}" if p else "—",
-                "BSR（主类目）": f"#{b:,}" if b else "—",
-            })
-        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-
-
-def render_price_stats(keepa, product):
-    p_min = keepa.get("price_90d_min")
-    p_avg = keepa.get("price_90d_avg")
-    p_max = keepa.get("price_90d_max")
-    current = product.get("current_price") or keepa.get("current_price")
-
-    if not (p_min and p_avg and p_max):
-        return
-
-    with st.container(border=True):
-        st.markdown("**📊 90天价格区间**")
-        col_gauge, col_stat = st.columns([3, 2])
-        with col_gauge:
-            st.plotly_chart(
-                price_range_gauge(current, p_min, p_avg, p_max),
-                use_container_width=True, config={"displayModeBar": False},
-            )
-        with col_stat:
-            st.markdown("")
-            mc1, mc2, mc3 = st.columns(3)
-            mc1.metric("🟢 最低", f"${p_min:.2f}")
-            mc2.metric("🟡 均价", f"${p_avg:.2f}")
-            mc3.metric("🔴 最高", f"${p_max:.2f}")
-
-            if current and p_min and p_max:
-                pct = (current - p_min) / (p_max - p_min) * 100 if p_max != p_min else 50
-                st.progress(int(min(100, max(0, pct))),
-                            text=f"当前价格处于90日区间 **{pct:.0f}%** 位置")
-
-
-def render_bsr_breakdown(product):
-    all_bsr = product.get("all_bsr") or []
-    if not all_bsr:
-        return
-    with st.container(border=True):
-        st.markdown("**🏆 各类目 BSR 排名**")
-        rows = [{'类目': b["category"], '排名': f"#{b['rank']:,}"} for b in all_bsr]
-        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-
-
-def render_bullets(product):
-    bullets = product.get("feature_bullets") or []
-    if not bullets:
-        return
-    with st.expander("✨ 核心卖点（Feature Bullets）", expanded=True):
-        for b in bullets:
-            st.markdown(f"- {b}")
-
-
-def render_competitors(competitors, my_price):
-    if not competitors:
-        return
-
-    st.markdown("### 🥊 竞对 ASIN 对比")
-    cols = st.columns(len(competitors))
-    for i, c in enumerate(competitors):
-        with cols[i]:
-            with st.container(border=True):
-                if c.get("thumbnail"):
-                    st.image(c["thumbnail"], width=80)
-                asin_str = c.get("asin", "")
-                st.caption(f"`{asin_str}`")
-                price = c.get("price")
-                if price:
-                    diff = price - my_price if my_price else 0
-                    color = "🟢" if diff > 0 else "🔴"
-                    diff_str = f"{color} {'+' if diff > 0 else ''}{diff:.2f}"
-                    st.metric("价格", f"${price:.2f}", delta=diff_str)
-                else:
-                    st.metric("价格", "—")
-
-                rating = c.get("rating")
-                reviews = c.get("review_count")
-                st.caption(
-                    f"⭐ {rating or '—'}  ·  {f'{reviews:,}' if reviews else '—'} 评"
-                )
-                st.caption((c.get("title") or "")[:50] + "…")
-
-    with st.expander("📋 竞对详细对比表", expanded=False):
-        rows = []
-        if my_price:
-            rows.append({
-                "ASIN": f"**{st.session_state.get('asin', '—')}（我的）**",
-                "价格": f"${my_price:.2f}",
-                "评分": "—", "评论数": "—", "Prime": "—"
-            })
-        for c in competitors:
-            p = c.get("price")
-            rows.append({
-                "ASIN": c.get("asin", ""),
-                "价格": f"${p:.2f}" if p else "—",
-                "评分": c.get("rating") or "—",
-                "评论数": f"{c['review_count']:,}" if c.get("review_count") else "—",
-                "Prime": "✅" if c.get("is_prime") else "❌",
-            })
-        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-
-
-def render_keywords(asin, kw_data, competitors):
-    """关键词排名模块"""
-    if not kw_data:
-        return
-
-    st.markdown("### 🔍 关键词排名分析")
-
-    comp_asins = [c["asin"] for c in (competitors or []) if c.get("asin")]
-
-    # 汇总表
-    summary_rows = []
-    for kw in kw_data:
-        row = {
-            "关键词": kw["keyword"],
-            "我的排名": f"#{kw['my_rank']}" if kw.get("my_rank") else "未入榜(>40)",
-        }
-        for ca in comp_asins[:3]:
-            cr = (kw.get("comp_ranks") or {}).get(ca)
-            row[f"竞对 {ca[:10]}"] = f"#{cr}" if cr else "未入榜"
-        if kw.get("error"):
-            row["备注"] = "查询失败"
-        summary_rows.append(row)
-
-    with st.container(border=True):
-        st.markdown("关键词排名概览")
-        st.dataframe(pd.DataFrame(summary_rows), hide_index=True, use_container_width=True)
-
-    # 每个关键词详细 Top5 搜索结果
-    with st.expander("📋 各关键词 Top5 搜索结果", expanded=False):
-        for kw in kw_data:
-            st.markdown(f"🔑 {kw['keyword']}")
-            my_rank = kw.get("my_rank")
-            rank_str = f"第 {my_rank} 位" if my_rank else "未入前40"
-            rank_color = "#16a34a" if my_rank and my_rank <= 10 else (
-                "#d97706" if my_rank and my_rank <= 20 else "#dc2626"
-            )
-            st.markdown(
-                f"<span style='color:{rank_color};font-weight:600'>我的排名：{rank_str}</span>",
-                unsafe_allow_html=True,
-            )
-            top5 = kw.get("top5") or []
-            if top5:
-                t5_rows = []
-                for idx, item in enumerate(top5):
-                    is_me = item.get("asin") == asin
-                    is_comp = item.get("asin") in comp_asins
-                    tag = " 🟣我" if is_me else (" 🔴竞" if is_comp else "")
-                    t5_rows.append({
-                        "位置": f"#{idx + 1}",
-                        "ASIN": f"{item.get('asin', '')}{tag}",
-                        "标题": (item.get("title") or "")[:55],
-                        "价格": f"${item['price']:.2f}" if item.get("price") else "—",
-                    })
-                st.dataframe(pd.DataFrame(t5_rows), hide_index=True, use_container_width=True)
-            st.markdown("---")
-
-
-def render_listing_score(listing):
-    """Listing 优化建议模块"""
-    if not listing:
-        return
-
-    score = listing.get("score", 0)
-    suggestions = listing.get("suggestions") or []
-
-    st.markdown("### 📝 Listing 优化评分")
-
-    col_score, col_detail = st.columns([1, 3])
-    with col_score:
-        with st.container(border=True):
-            if score >= 80:
-                score_color = "#16a34a"
-                score_label = "优秀"
-            elif score >= 60:
-                score_color = "#d97706"
-                score_label = "待优化"
-            else:
-                score_color = "#dc2626"
-                score_label = "需立即改善"
-
-            st.markdown(
-                f"""
-                <div style="text-align:center;padding:12px 0">
-                    <div style="font-size:48px;font-weight:800;color:{score_color}">{score}</div>
-                    <div style="font-size:13px;color:{score_color};font-weight:600">{score_label}</div>
-                    <div style="font-size:11px;color:#94a3b8;margin-top:4px">满分 100</div>
-                    <div class="score-bar-wrap" style="margin-top:10px">
-                        <div class="score-bar" style="width:{score}%;background:{score_color}"></div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            counts = {}
-            for s in suggestions:
-                p = s.get("priority", "low")
-                counts[p] = counts.get(p, 0) + 1
-            if counts.get("critical"):
-                st.markdown(f"🔴 **{counts['critical']}** 项严重问题")
-            if counts.get("high"):
-                st.markdown(f"🟠 **{counts['high']}** 项高优先级")
-            if counts.get("medium"):
-                st.markdown(f"🟡 **{counts['medium']}** 项中优先级")
-            if counts.get("ok"):
-                st.markdown(f"🟢 **{counts['ok']}** 项已达标")
-
-    with col_detail:
-        with st.container(border=True):
-            st.markdown("优化建议清单")
-            priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "ok": 4}
-            sorted_suggestions = sorted(
-                suggestions, key=lambda x: priority_order.get(x.get("priority", "low"), 3)
-            )
-            for s in sorted_suggestions:
-                p = s.get("priority", "low")
-                icon_map = {
-                    "critical": "🔴", "high": "🟠",
-                    "medium": "🟡", "low": "🔵", "ok": "🟢"
-                }
-                icon = icon_map.get(p, "⚪")
-                area = s.get("area", "")
-                issue = s.get("issue", "")
-                action = s.get("action", "")
-                st.markdown(
-                    f"{icon} **{area}** — {issue}  \n"
-                    f"<span style='color:#64748b;font-size:12px'>建议：{action}</span>",
-                    unsafe_allow_html=True,
-                )
-            if not sorted_suggestions:
-                st.success("🎉 Listing 各项指标均达标！")
-
-
-def render_error_banner(errors):
-    if not errors:
-        return
-    with st.expander("⚠️ 部分数据源出现错误", expanded=True):
-        for src, msg in errors.items():
-            st.error(f"**{src}**: {msg}")
-
-
-# ═══════════════════════════════════════════════════════════════
-#  主程序入口
-# ═══════════════════════════════════════════════════════════════
-def main():
-    rf_key, ka_key = get_api_keys()
-
-    st.markdown(
-        "<h2 style='margin-bottom:4px'>📦 Amazon ASIN Dashboard</h2>"
-        "<p style='color:#64748b;font-size:14px;margin-bottom:16px'>"
-        "输入任意 Amazon US ASIN，即时获取价格趋势、BSR排名、竞对分析、关键词排名、Listing优化</p>",
-        unsafe_allow_html=True,
-    )
-
-    col_input, col_btn, col_spacer = st.columns([3, 1, 4])
-    with col_input:
-        asin_input = st.text_input(
-            "ASIN",
-            placeholder="B0D54LVZK5",
-            max_chars=10,
-            label_visibility="collapsed",
-        ).strip().upper()
-    with col_btn:
-        search = st.button("🔍 查询", type="primary", use_container_width=True)
-
-    st.markdown(
-        "<p style='font-size:12px;color:#94a3b8'>示例：</p>",
-        unsafe_allow_html=True,
-    )
-    ex_cols = st.columns(4)
-    examples = ["B0D54LVZK5", "B08N5WRWNW", "B07FZ8S74R", "B09B8ZCPKQ"]
-    for i, ex in enumerate(examples):
-        if ex_cols[i].button(ex, key=f"ex_{ex}", use_container_width=True):
-            asin_input = ex
-            search = True
-
-    st.divider()
-
-    if not search and "last_asin" not in st.session_state:
-        st.markdown("""
-        <div style="text-align:center;padding:60px 0;color:#94a3b8">
-            <div style="font-size:48px">📦</div>
-            <div style="font-size:18px;margin-top:12px;color:#64748b;font-weight:600">
-                输入 ASIN 开始查询
+        st.markdown(f"""
+        <div class="diag-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-size:13px;font-weight:600;color:white">健康评分</span>
+            {badge_html(overall)}
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+            <div style="text-align:center;flex-shrink:0">
+              <div style="font-size:36px;font-weight:800;color:{ring_color};line-height:1">{total}</div>
+              <div style="font-size:10px;color:#64748b">/ 100</div>
             </div>
-            <div style="font-size:13px;margin-top:8px">
-                支持所有 Amazon.com 在售商品，数据实时拉取
-            </div>
+            <div style="flex:1">{bars_html}</div>
+          </div>
+          <div style="background:rgba(51,65,85,0.4);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:10px;font-size:11px;color:#94a3b8">
+            <span style="color:#e2e8f0">综合诊断：</span>该 ASIN 处于
+            <span style="color:#fbbf24;font-weight:600">正常</span>水平，评论量不足是核心瓶颈，关键词自然流量有较大提升空间，广告存在浪费。
+          </div>
         </div>
         """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Row 2: Issues / Opportunities / Actions
+    c1, c2, c3 = st.columns(3)
+    issues = [
+        "评论量仅1,247，竞品均值超9,000，转化信任度严重不足",
+        "Listing 质量分72分（满分100），图片和描述有优化空间",
+        "BSR 连续7天下滑，当前 #247，需广告干预",
+    ]
+    opportunities = [
+        "'bluetooth speaker'(45万搜量)自然排名#18，进入Top10可大幅提升有机流量",
+        "'small bluetooth speaker'自然排名#12，广告ACOS仅20.1%，可放量",
+        "类目需求整体健康增长，竞品无明显价格护城河",
+    ]
+    suggestions = [
+        "30天内 Review 数量冲破2,000（Request a Review + Vine）",
+        "暂停 ACOS>50% 的广告词，节省约$376/月",
+        "开启 Sponsored Brands 视频广告，提升品牌认知",
+    ]
+    for col, title, icon, color, items in [
+        (c1, "核心问题 Top 3", "⚠", "#f87171", issues),
+        (c2, "核心机会 Top 3", "◎", "#60a5fa", opportunities),
+        (c3, "建议动作 Top 3", "⚡", "#34d399", suggestions),
+    ]:
+        with col:
+            rows = "".join(f'<div style="display:flex;gap:6px;margin-bottom:6px"><span style="color:{color};font-weight:700;flex-shrink:0">{i+1}.</span><span style="font-size:11px;color:#cbd5e1">{item}</span></div>' for i,item in enumerate(items))
+            st.markdown(f"""
+            <div class="diag-card">
+              <div style="font-size:12px;font-weight:600;color:{color};margin-bottom:10px">{icon} {title}</div>
+              {rows}
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MODULE 1 — CATEGORY
+# ─────────────────────────────────────────────────────────────
+
+def render_category():
+    d = MOCK
+    sc = MOCK["scores"]["category"]
+    with st.expander(f"📊 模块 1 · 品类分析    {badge_html('正常')}    {sc}/15分", expanded=True):
+        st.markdown(metric_card("当日销量","33","件","近7日均值38.6件，低于均值",True) +
+                    metric_card("类目Top100均值","37.1","件") +
+                    metric_card("类目份额","1.5%","","连续3日下滑",True) +
+                    metric_card("BSR排名","#247","","7天跌36位",True) +
+                    metric_card("Top10品牌均值","191","件","差距×5.8倍"), unsafe_allow_html=True)
+        # done by columns
+        c1,c2,c3,c4,c5 = st.columns(5)
+        cols_data = [
+            (c1, "当日销量", "33", "件", "近7日均值38.6件", True),
+            (c2, "类目均值", "37.1", "件", "Top100日均", False),
+            (c3, "类目份额", "1.5%", "", "连续3日下滑", True),
+            (c4, "BSR排名",  "#247", "", "7天跌36位", True),
+            (c5, "Top10均值","191", "件", "差距×5.8倍", False),
+        ]
+        for col, label, val, unit, sub, hl in cols_data:
+            with col:
+                color = "#fbbf24" if hl else "white"
+                st.markdown(f"""
+                <div class="diag-card" style="{'border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)' if hl else ''}">
+                  <div class="diag-label">{label}</div>
+                  <div style="font-size:18px;font-weight:700;color:{color}">{val}<span style="font-size:11px;color:#94a3b8;margin-left:2px">{unit}</span></div>
+                  <div class="diag-sub">{sub}</div>
+                </div>""", unsafe_allow_html=True)
+
+        # Sales trend chart
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["our_sales"], name="我方销量",
+            line=dict(color="#60a5fa", width=2), fill="tozeroy",
+            fillcolor="rgba(96,165,250,0.1)"))
+        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["cat_avg"], name="类目均值",
+            line=dict(color="#a78bfa", width=1.5, dash="dash")))
+        fig.update_layout(dark_layout(title="7日销量趋势对比", height=200))
+        st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
+
+        # Brand share bar chart
+        brands = d["top_brands"]
+        fig2 = go.Figure(go.Bar(
+            x=[b["share"] for b in brands], y=[b["brand"] for b in brands],
+            orientation="h",
+            marker=dict(color=["#34d399" if b["brand"]=="SoundMax" else "#3b82f6" for b in brands]),
+        ))
+        fig2.update_layout(dark_layout(title="类目品牌份额分布 (%)", height=200, xaxis_title="市场份额 (%)"))
+        st.plotly_chart(fig2, use_container_width=True, config=plotly_cfg())
+
+        st.markdown(judgment("销量趋势7日连续下滑，当前份额1.5%低于类目均值；类目整体保持增长，品类需求健康。"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(action_list([
+            "立即检查是否有差评或 Q&A 影响转化",
+            "加强关键词广告投放，阻止 BSR 继续下滑",
+            "考虑 Coupon 或 Prime Exclusive Discount 刺激转化",
+        ]), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MODULE 2 — BRAND
+# ─────────────────────────────────────────────────────────────
+
+def render_brand():
+    d = MOCK
+    sc = MOCK["scores"]["brand"]
+    with st.expander(f"🏆 模块 2 · 品牌分析    {badge_html('正常')}    {sc}/10分", expanded=True):
+        c1,c2,c3,c4 = st.columns(4)
+        for col, label, val, sub, hl in [
+            (c1,"品牌类目排名","#8","Top10品牌",False),
+            (c2,"品牌市场份额","4.2%","过去7天",False),
+            (c3,"本ASIN贡献度","42%","占品牌总销量",True),
+            (c4,"品牌增长WoW","-3.2%","类目同期+1.4%",True),
+        ]:
+            with col:
+                color = "#fbbf24" if hl else "white"
+                st.markdown(f"""
+                <div class="diag-card" style="{'border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)' if hl else ''}">
+                  <div class="diag-label">{label}</div>
+                  <div style="font-size:18px;font-weight:700;color:{color}">{val}</div>
+                  <div class="diag-sub">{sub}</div>
+                </div>""", unsafe_allow_html=True)
+
+        bt = d["brand_trend"]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=[r["date"] for r in bt], y=[r["brandIdx"] for r in bt], name="品牌指数",
+            line=dict(color="#60a5fa", width=2), mode="lines+markers",
+            marker=dict(size=4, color="#60a5fa")))
+        fig.add_trace(go.Scatter(
+            x=[r["date"] for r in bt], y=[r["catIdx"] for r in bt], name="类目指数",
+            line=dict(color="#a78bfa", width=1.5, dash="dash"), mode="lines"))
+        fig.add_hline(y=100, line=dict(color="#334155", dash="dot"), annotation_text="基准线")
+        fig.update_layout(dark_layout(title="品牌 vs 类目趋势指数（基准=100）", height=200, yaxis_range=[78,115]))
+        st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
+
+        st.markdown(judgment("品牌整体在下滑（-3.2% WoW），而类目同期增长1.4%；本 ASIN 贡献品牌42%销量，品牌势能偏弱。"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(action_list([
+            "检查品牌下其他 ASIN 是否存在 Review 问题拖累品牌整体",
+            "考虑开启 Sponsored Brands 广告，强化品牌认知度",
+            "评估是否需要推出新款 ASIN 补充产品线",
+        ]), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MODULE 3 — COMPETITORS
+# ─────────────────────────────────────────────────────────────
+
+def render_competitors():
+    sc = MOCK["scores"]["competition"]
+    comps = MOCK["competitors"]
+    with st.expander(f"🎯 模块 3 · 竞品分析    {badge_html('正常')}    {sc}/20分", expanded=True):
+        # Build comparison table HTML
+        rows_html = ""
+        for c in comps:
+            ours = c["ours"]
+            prefix = '<span style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);padding:1px 6px;border-radius:3px;font-size:10px;margin-right:4px">我方</span>' if ours else ""
+            rev_color = 'class="red-val"' if ours and c["reviews"]<3000 else ""
+            rat_color = "green-val" if c["rating"]>=4.5 else ("amber-val" if c["rating"]>=4.0 else "red-val")
+            ls_color  = "green-val" if c["lscore"]>=85 else ("amber-val" if c["lscore"]>=75 else "red-val")
+            disc = f'<span class="green-val">-{c["discount"]}%</span>' if c["discount"]>0 else "—"
+            row_style = ' style="background:rgba(59,130,246,0.04)"' if ours else ""
+            rows_html += f"""
+            <tr{row_style}>
+              <td>{prefix}<span style="font-family:monospace;font-size:11px">{c['asin']}</span><br><span style="color:#64748b;font-size:10px">{c['brand']}</span></td>
+              <td style="font-weight:600;color:white">${c['price']}</td>
+              <td>{disc}</td>
+              <td class="{rat_color}">{c['rating']}★</td>
+              <td {rev_color}>{c['reviews']:,}</td>
+              <td>{c['sales']:,}</td>
+              <td style="color:#64748b">{c['budget']}</td>
+              <td class="{ls_color}">{c['lscore']}</td>
+              <td>#{c['bsr']}</td>
+            </tr>"""
+
+        st.markdown(f"""
+        <div class="tbl-wrapper">
+        <table class="dtbl">
+          <thead><tr><th>ASIN / 品牌</th><th>价格</th><th>折扣</th><th>评分</th><th>评论量</th><th>月销估算</th><th>广告预算</th><th>Listing分</th><th>BSR</th></tr></thead>
+          <tbody>{rows_html}</tbody>
+        </table></div>""", unsafe_allow_html=True)
+
+        c_adv, c_dis = st.columns(2)
+        with c_adv:
+            adv_rows = "".join(f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#34d399">+</span>{a}</div>' for a in [
+                "24H 续航领先多数竞品",
+                "双配对功能差异化",
+                "USB-C 充电体验好",
+                "价格中档区间具备竞争力",
+            ])
+            st.markdown(f'<div class="adv-card"><div style="font-size:12px;font-weight:600;color:#34d399;margin-bottom:8px">✓ 我方优势</div>{adv_rows}</div>', unsafe_allow_html=True)
+        with c_dis:
+            dis_rows = "".join(f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#f87171">-</span>{a}</div>' for a in [
+                "评论量仅1247，竞品均值9270（-87%）",
+                "Listing 质量分72，低于所有竞品",
+                "品牌知名度弱，无 Brand Story",
+                "BSR #247，落后 Tribit(#22)、Anker(#12)",
+            ])
+            st.markdown(f'<div class="dis-card"><div style="font-size:12px;font-weight:600;color:#f87171;margin-bottom:8px">✗ 我方劣势</div>{dis_rows}</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="risk-box" style="margin-top:10px"><span style="font-weight:600">⚠ 最大风险：</span>评论量极度不足，在同类搜索页面中信任感最低，严重拖累转化率。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="prio-box" style="margin-top:6px"><span style="font-weight:600">→ 优先优化：</span>30天内Review破2000是单一最高ROI动作，优先于任何广告优化。</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(action_list([
+            "优先刷新 Review 数量：批量发送 Request a Review，目标30天内破2000",
+            "Price 压至 $42.99 测试是否提升 CVR 并赶超 Tribit",
+            "补充 Lifestyle 图和对比图，提升 Listing 质量分",
+        ]), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MODULE 4 — KEYWORDS
+# ─────────────────────────────────────────────────────────────
+
+def render_keywords():
+    sc = MOCK["scores"]["keywords"]
+    kws = MOCK["keywords"]
+    with st.expander(f"🔍 模块 4 · 关键词分析    {badge_html('正常')}    {sc}/20分", expanded=True):
+        def fmt_rank(r, good=10, ok=20):
+            if r<=good: return f'<span class="green-val">#{r}</span>'
+            if r<=ok:   return f'<span class="amber-val">#{r}</span>'
+            return f'<span class="red-val">#{r}</span>'
+        def fmt_chg(c):
+            if c>0: return f'<span class="green-val">↑{c}</span>'
+            if c<0: return f'<span class="red-val">↓{abs(c)}</span>'
+            return '<span style="color:#64748b">—</span>'
+        def fmt_opp(o):
+            if o>=80: return f'<span class="green-val">{o}</span>'
+            if o>=70: return f'<span class="blue-val">{o}</span>'
+            return f'<span style="color:#64748b">{o}</span>'
+        def fmt_vol(v):
+            if v>=100000: return f"{v//1000}K"
+            return f"{v//1000}K"
+
+        rows = "".join(f"""
+        <tr>
+          <td style="font-weight:500;color:white">{k['kw']}</td>
+          <td>{fmt_vol(k['vol'])}</td>
+          <td style="color:{'#34d399' if k['trend']=='↑' else '#94a3b8'}">{k['trend']}</td>
+          <td>{fmt_rank(k['org'])}</td>
+          <td>{fmt_rank(k['spn'],5,10)}</td>
+          <td>{fmt_chg(k['chg'])}</td>
+          <td style="color:#94a3b8">{k['cov']}/5</td>
+          <td>{fmt_opp(k['opp'])}</td>
+          <td>{badge_html(k['status'])}</td>
+        </tr>""" for k in kws)
+
+        st.markdown(f"""
+        <div class="tbl-wrapper">
+        <table class="dtbl">
+          <thead><tr><th>关键词</th><th>搜索量/月</th><th>趋势</th><th>自然排名</th><th>广告排名</th><th>7天变化</th><th>竞品覆盖</th><th>机会分</th><th>状态</th></tr></thead>
+          <tbody>{rows}</tbody>
+        </table></div>""", unsafe_allow_html=True)
+
+        st.markdown(judgment("核心词自然排名偏低（前3词均在#12-32），'waterproof speaker'排名骤降，广告端部分词效率良好。"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(action_list([
+            "'small bluetooth speaker' 自然排名#12，加码广告冲Top5",
+            "'waterproof bluetooth speaker' 需Listing优化（标题/5点）后再推广告",
+            "'bluetooth speaker'(45万搜量) 有机排名仅#18，是最大增量机会",
+        ]), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MODULE 5 — ADS
+# ─────────────────────────────────────────────────────────────
+
+def render_ads():
+    sc = MOCK["scores"]["ads"]
+    s = MOCK["ads_summary"]
+    camps = MOCK["campaigns"]
+    ad_kws = MOCK["ad_kws"]
+    with st.expander(f"💰 模块 5 · 广告分析    {badge_html('正常')}    {sc}/20分", expanded=True):
+        # Summary metrics
+        cols = st.columns(9)
+        metrics = [
+            ("总花费", f"${s['spend']:,}"),("曝光量",f"{s['impressions']//1000}K"),("点击量",f"{s['clicks']:,}"),
+            ("CTR",f"{s['ctr']}%"),("CVR",f"{s['cvr']}%"),("CPC",f"${s['cpc']}"),
+            ("转化数",str(s['conv'])),("ACOS",f"{s['acos']}%"),("ROAS",f"{s['roas']}x"),
+        ]
+        for col,(label,val) in zip(cols, metrics):
+            with col:
+                hl = label=="ACOS" and s['acos']>30
+                clr = "#fbbf24" if hl else "white"
+                st.markdown(f"""
+                <div class="diag-card" style="{'border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.05)' if hl else ''}; padding:10px">
+                  <div class="diag-label">{label}</div>
+                  <div style="font-size:15px;font-weight:700;color:{clr}">{val}</div>
+                </div>""", unsafe_allow_html=True)
+
+        tab_camp, tab_kw = st.tabs(["📋 广告活动", "🔑 关键词明细"])
+
+        with tab_camp:
+            def camp_health(h):
+                return badge_html("good" if h=="good" else "warn")
+            rows = "".join(f"""
+            <tr>
+              <td style="color:white;font-weight:500">{c['name']}</td>
+              <td style="color:white">${c['spend']}</td>
+              <td>{c['impr']//1000}K</td><td>{c['clicks']}</td>
+              <td>{c['ctr']}%</td><td>{c['cvr']}%</td>
+              <td class="{'red-val' if c['acos']>35 else ('amber-val' if c['acos']>28 else 'green-val')}">{c['acos']}%</td>
+              <td>{c['roas']}x</td>
+              <td>{camp_health(c['health'])}</td>
+            </tr>""" for c in camps)
+            st.markdown(f"""
+            <div class="tbl-wrapper">
+            <table class="dtbl">
+              <thead><tr><th>广告活动</th><th>花费</th><th>曝光</th><th>点击</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>状态</th></tr></thead>
+              <tbody>{rows}</tbody>
+            </table></div>""", unsafe_allow_html=True)
+
+        with tab_kw:
+            rows = "".join(f"""
+            <tr style="{'background:rgba(239,68,68,0.04)' if k['status']=='abn' else ''}">
+              <td style="color:white;font-weight:500">{k['kw']}</td>
+              <td>${k['spend']}</td><td>{k['clicks']}</td>
+              <td>{k['ctr']}%</td><td>${k['cpc']}</td>
+              <td>{k['conv']}</td><td>{k['cvr']}%</td>
+              <td class="{'red-val' if k['acos']>45 else ('amber-val' if k['acos']>30 else 'green-val')}">{k['acos']}%</td>
+              <td>{badge_html(k['status'])}</td>
+            </tr>""" for k in ad_kws)
+            st.markdown(f"""
+            <div class="tbl-wrapper">
+            <table class="dtbl">
+              <thead><tr><th>关键词</th><th>花费</th><th>点击</th><th>CTR</th><th>CPC</th><th>转化</th><th>CVR</th><th>ACOS</th><th>状态</th></tr></thead>
+              <tbody>{rows}</tbody>
+            </table></div>""", unsafe_allow_html=True)
+
+        st.markdown(judgment("整体 ACOS 28.5% 尚可，但'waterproof speaker'和'ipx7 speaker'两词 ACOS 超50%，拖累整体效率。"), unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+        st.markdown(action_list([
+            "立即暂停/否词 'waterproof speaker'（ACOS 54.9%）和 'ipx7 speaker'（50.3%）",
+            "提高 'small bluetooth speaker' 和 'outdoor speaker' 预算（ACOS 20-22%，机会词）",
+            "开启 Sponsored Brands 视频广告，提升 CTR",
+        ]), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MODULE 6 — 30-DAY ACTION PLAN
+# ─────────────────────────────────────────────────────────────
+
+def render_action_plan():
+    with st.expander("🎯 模块 6 · 未来30天目标与运营方案", expanded=True):
+        col_a, col_b = st.columns(2)
+
+        def plan_actions_html(actions):
+            p_class = {"P0":"p0","P1":"p1","P2":"p2"}
+            rows = ""
+            for a in actions:
+                rows += f"""
+                <div style="display:flex;align-items:flex-start;gap:8px;background:rgba(30,41,59,0.6);border-radius:8px;padding:10px;margin-bottom:6px">
+                  <span class="{p_class[a['p']]}">{a['p']}</span>
+                  <div style="flex:1">
+                    <div style="font-size:12px;color:white">{a['action']}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px">{a['impact']}</div>
+                  </div>
+                  <span style="font-size:10px;color:#475569;flex-shrink:0">{a['d']}</span>
+                </div>"""
+            return rows
+
+        with col_a:
+            actions_a = [
+                {"p":"P0","action":"暂停 'waterproof speaker' 和 'ipx7 speaker' 广告词","impact":"节省约$376/月无效花费","d":"D1"},
+                {"p":"P1","action":"将售价从 $45.99 提升至 $47.99 A/B测试一周","impact":"利润率提升约4%，观察 CVR 变化","d":"D3"},
+                {"p":"P1","action":"提高 'small bluetooth speaker' 预算20%（ACOS 20.1%）","impact":"预估新增约40次转化/月","d":"D5"},
+                {"p":"P2","action":"优化 Listing Title 自然植入 'waterproof' 词","impact":"提升该词自然流量，减少广告依赖","d":"D7"},
+                {"p":"P2","action":"申请 A+ Content（若未开通）","impact":"预估 CVR 提升5-8%","d":"D14"},
+            ]
+            st.markdown(f"""
+            <div class="plan-card plan-a">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:13px;font-weight:700;color:#60a5fa">方案 A · 利润最大化</span>
+                <div style="text-align:right">
+                  <div style="font-size:10px;color:#64748b">成功概率</div>
+                  <div style="font-size:22px;font-weight:800;color:#60a5fa">62%</div>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">削减低效广告花费，小幅提价，聚焦高 ROAS 词，预计30天利润提升约37%。</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+                <div class="p-card"><div class="diag-label">目标利润/月</div><div style="font-size:15px;font-weight:700;color:white">$8,500</div><div style="font-size:11px;color:#34d399">+37% vs 当前</div></div>
+                <div class="p-card"><div class="diag-label">当前利润/月</div><div style="font-size:15px;font-weight:700;color:#94a3b8">$6,200</div></div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>
+              {plan_actions_html(actions_a)}
+              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">
+                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>
+                <div style="font-size:11px;color:#94a3b8">⚠ 提价初期可能带来 CVR 短暂下滑</div>
+                <div style="font-size:11px;color:#94a3b8">⚠ 削减广告可能影响 BSR 排名动能</div>
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+        with col_b:
+            actions_b = [
+                {"p":"P0","action":"总广告预算提升至 $4,200/月（+48%）","impact":"预估新增约450次点击/月","d":"D1"},
+                {"p":"P0","action":"30天内 Review 数量破 2000（Request a Review）","impact":"提升搜索权重和转化率","d":"D1"},
+                {"p":"P1","action":"开启 Sponsored Brands 视频广告","impact":"提升上层流量认知","d":"D5"},
+                {"p":"P1","action":"补充 2 张 Lifestyle 图 + 1 张对比图","impact":"预估 CTR 提升3-5%","d":"D7"},
+                {"p":"P2","action":"将售价降至 $42.99 配合 Coupon 5%","impact":"提升 CVR，争抢 Tribit 价格段","d":"D10"},
+            ]
+            st.markdown(f"""
+            <div class="plan-card plan-b">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:13px;font-weight:700;color:#34d399">方案 B · 日均销量提升30%</span>
+                <div style="text-align:right">
+                  <div style="font-size:10px;color:#64748b">成功概率</div>
+                  <div style="font-size:22px;font-weight:800;color:#34d399">55%</div>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">加大广告投入并优化关键词自然排名，同步提升 Listing 质量，目标月销量破 1274 单。</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+                <div class="p-card"><div class="diag-label">目标月销量</div><div style="font-size:15px;font-weight:700;color:white">1,274件</div><div style="font-size:11px;color:#34d399">+30% vs 当前</div></div>
+                <div class="p-card"><div class="diag-label">当前月销量</div><div style="font-size:15px;font-weight:700;color:#94a3b8">980件</div></div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>
+              {plan_actions_html(actions_b)}
+              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">
+                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>
+                <div style="font-size:11px;color:#94a3b8">⚠ 初期 ACOS 预计升至32-35%，需接受短期效率牺牲</div>
+                <div style="font-size:11px;color:#94a3b8">⚠ Review 增长需4-6周才能体现在搜索权重上</div>
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# FOOTER
+# ─────────────────────────────────────────────────────────────
+
+def render_footer():
+    api_fns = ["getAsinOverview","getCategoryAnalysis","getBrandAnalysis","getCompetitorAnalysis","getKeywordAnalysis","getAdsAnalysis","getActionPlan"]
+    fns_html = "".join(f'<span style="font-family:monospace;font-size:10px;color:#64748b;background:rgba(51,65,85,0.4);padding:3px 8px;border-radius:4px">{fn}()</span>' for fn in api_fns)
+    st.markdown(f"""
+    <div style="margin:0 24px 24px 24px;background:rgba(30,41,59,0.3);border:1px solid rgba(71,85,105,0.4);border-radius:12px;padding:16px">
+      <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px">数据来源说明</div>
+      <div style="font-size:11px;color:#64748b">当前为 <span style="color:#fbbf24;font-weight:600">模拟数据</span>，所有数值仅供演示。可替换为：Amazon Rainforest API · Keepa API · Amazon ABA · Ads Console 报告 · ERP 数据</div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(71,85,105,0.4);display:flex;flex-wrap:wrap;gap:6px">{fns_html}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────────────────────
+
+def main():
+    # Session state
+    if "has_data" not in st.session_state:
+        st.session_state.has_data = True
+    if "current_asin" not in st.session_state:
+        st.session_state.current_asin = "B0D54LVZK5"
+
+    render_topbar()
+
+    # ── Input bar ──
+    st.markdown('<div style="background:rgba(15,23,42,0.97);border-bottom:1px solid rgba(71,85,105,0.5);padding:8px 24px 6px 24px">', unsafe_allow_html=True)
+    col_asin, col_site, col_period, col_btn, col_refresh, col_score = st.columns([4,1,2,1.5,1.5,2])
+
+    with col_asin:
+        asin_input = st.text_input("ASIN", value=st.session_state.current_asin, label_visibility="collapsed", placeholder="输入 ASIN...")
+    with col_site:
+        site = st.selectbox("站点", ["US","CA","UK","DE","JP"], label_visibility="collapsed")
+    with col_period:
+        period = st.radio("时间", ["日","周"], horizontal=True, label_visibility="collapsed")
+    with col_btn:
+        if st.button("🔍 开始分析", use_container_width=True):
+            if asin_input.strip():
+                with st.spinner(f"正在诊断 {asin_input.upper()}..."):
+                    time.sleep(1.2)
+                st.session_state.current_asin = asin_input.strip().upper()
+                st.session_state.has_data = True
+                st.rerun()
+    with col_refresh:
+        if st.button("↻ 刷新", use_container_width=True):
+            st.rerun()
+    with col_score:
+        total = MOCK["scores"]["total"]
+        overall = status_of(total)
+        if st.session_state.has_data:
+            c_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+            st.markdown(f"""
+            <div style="height:100%;display:flex;align-items:center;gap:8px;margin-top:4px">
+              <span style="font-size:18px;font-weight:800;color:{c_map[overall]}">{total}/100</span>
+              {badge_html(overall)}
+            </div>""", unsafe_allow_html=True)
+
+    # Example ASINs
+    st.markdown("""
+    <div style="font-size:11px;color:#475569;margin-top:4px;display:flex;gap:12px;align-items:center">
+      <span>示例：</span>
+      <span style="font-family:monospace">B0D54LVZK5</span>
+      <span style="font-family:monospace">B08N5WRWNW</span>
+      <span style="font-family:monospace">B07FZ8S74R</span>
+      <span style="font-family:monospace">B09B8ZCPKQ</span>
+    </div>""", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if not st.session_state.has_data:
+        st.markdown("""
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 0;color:#64748b">
+          <div style="font-size:40px;margin-bottom:16px">📦</div>
+          <div style="font-size:14px">输入 ASIN 并点击「开始分析」</div>
+        </div>""", unsafe_allow_html=True)
         return
 
-    if search and asin_input:
-        st.session_state["last_asin"] = asin_input
-    asin = st.session_state.get("last_asin", asin_input)
+    # ── Section header ──
+    asin = st.session_state.current_asin
+    p = MOCK["product"]
+    st.markdown(f"""
+    <div style="padding:14px 24px 8px 24px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <span style="font-size:14px;font-weight:700;color:white">诊断报告 · </span>
+        <span style="font-size:14px;font-weight:700;color:#60a5fa;font-family:monospace">{asin}</span>
+        <span style="font-size:11px;color:#64748b;margin-left:10px">{p['category']} · 站点 {site} · 过去7天</span>
+      </div>
+    </div>""", unsafe_allow_html=True)
 
-    if not asin or len(asin) != 10:
-        st.warning("⚠️ ASIN 必须是10位字母数字，例如 B0D54LVZK5")
-        return
+    # ── Modules ──
+    with st.container():
+        st.markdown('<div style="padding:0 24px">', unsafe_allow_html=True)
+        render_overview(asin)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if not rf_key or not ka_key:
-        st.error("❌ 请在左侧 Sidebar 填写 API Keys，或在 secrets.toml 中配置")
-        return
+    st.markdown('<div style="padding:0 24px;display:flex;flex-direction:column;gap:12px">', unsafe_allow_html=True)
+    render_category()
+    render_brand()
+    render_competitors()
+    render_keywords()
+    render_ads()
+    render_action_plan()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.session_state["asin"] = asin
+    render_footer()
 
-    with st.spinner(f"⏳ 正在查询 {asin}，同步调用 Rainforest + Keepa API…"):
-        product, keepa, competitors, kw_data, listing, errors = load_data(asin, rf_key, ka_key)
-
-    if errors:
-        render_error_banner(errors)
-
-    with st.container(border=True):
-        render_product_header(asin, product, keepa)
-
-    render_metrics(product, keepa)
-    st.markdown("")
-
-    col_l, col_r = st.columns([2, 3])
-    with col_l:
-        render_price_stats(keepa, product)
-    with col_r:
-        render_trends(keepa)
-
-    col_bsr, col_bullets = st.columns(2)
-    with col_bsr:
-        render_bsr_breakdown(product)
-    with col_bullets:
-        render_bullets(product)
-
-    my_price = product.get("current_price") or keepa.get("current_price")
-    render_competitors(competitors, my_price)
-
-    render_keywords(asin, kw_data, competitors)
-
-    render_listing_score(listing)
-
-    st.markdown("---")
-    fetch_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    tokens = keepa.get("tokens_left")
-    st.caption(
-        f"数据更新时间：{fetch_time}  ·  ASIN: `{asin}`"
-        + (f"  ·  Keepa 剩余 Tokens：{tokens:,}" if tokens else "")
-    )
-
-
-if __name__ == "__main__":
-    main()
+main()
