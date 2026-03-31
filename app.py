@@ -1103,6 +1103,114 @@ def render_ads():
 
 def render_action_plan():
     st.markdown('<div id="sec-plan" class="sec-anchor"></div>', unsafe_allow_html=True)
+
+    # ═══ 预警参数配置 & 预警报告 ═══════════════════════════════
+    _s_alrt = MOCK["ads_summary"]
+    _kws_alrt = MOCK.get("keywords", [])
+    _sal7 = [950, 980, 1010, 960, 1050, 1090, 1140]
+    _sal_avg = round(sum(_sal7) / 7, 1)
+    _kw_rk = _kws_alrt[0]["org"] if _kws_alrt else 18
+    _cpo_v = round(_s_alrt["spend"] / max(_s_alrt["conv"], 1), 2)
+    _mdef = [
+        dict(key="sales",  label="日均销量 (件)",   pfx="",  fmt="{:.0f}件",  cur=_sal_avg,
+             op="lt", default=1100, step=10,
+             trend="↑ 7日环比+8.3%，广告拉动为主",
+             risk_cause="Review仅1,247条 vs 竞品均值9,270条；广告依赖度高，预算缩减销量将大幅回落",
+             rec="30天内追评至2000条，建立自然流量护城河；Review是当前最高ROI优化动作"),
+        dict(key="kw_rk",  label="核心词排名 (位)", pfx="",  fmt="#{:.0f}",   cur=_kw_rk,
+             op="gt", default=20, step=1,
+             trend="→ 稳定在#18-#20，广告持续维权排名",
+             risk_cause="自然排名靠后，竞品均在Top10；停投广告后排名骤降，自然获客成本激增",
+             rec="加大'bluetooth speaker'精准词出价，4周内目标冲进Top10自然排名"),
+        dict(key="margin", label="毛利率 (%)",       pfx="",  fmt="{:.1f}%",  cur=32.5,
+             op="lt", default=30.0, step=0.5,
+             trend="→ 稳定在32-33%，成本结构尚合理",
+             risk_cause="ACOS 28.5%持续侵蚀利润，CPC上涨将进一步压缩净利率",
+             rec="淘汰ACOS>40%关键词，Broad/Auto预算转向Exact词；毛利率目标维持35%+"),
+        dict(key="ctr",    label="CTR (%)",          pfx="",  fmt="{:.2f}%",  cur=_s_alrt["ctr"],
+             op="lt", default=2.5, step=0.1,
+             trend="↓ 昨日2.3%，本周均值2.4%；行业均值3.2%",
+             risk_cause="主图差异化不足，竞品视觉更强；低CTR拉高CPM成本，广告ROI持续下降",
+             rec="A/B测试场景图vs白底图，主图加角标突出'24H续航'，目标CTR 3.0%+"),
+        dict(key="cvr",    label="CVR (%)",          pfx="",  fmt="{:.2f}%",  cur=_s_alrt["cvr"],
+             op="lt", default=10.0, step=0.1,
+             trend="↑ 近7日回升，当前8.97%，改善趋势明显",
+             risk_cause="Listing评分72/100偏低，A+内容和视频缺失，买家决策环节存在用户流失",
+             rec="上线A+内容+竞品对比表格，补充使用场景视频，目标CVR突破10%"),
+        dict(key="cpo",    label="广告CPO",          pfx="$", fmt="{:.2f}",   cur=_cpo_v,
+             op="gt", default=12.0, step=0.5,
+             trend="→ 当前$9.12，近7日小幅波动，整体可控",
+             risk_cause="旺季流量成本上升，CVR波动将直接推高CPO，存在突破$12的风险",
+             rec="聚焦高CVR关键词加大投放，低CVR词降bid；严守CPO<$10红线"),
+        dict(key="cpc",    label="CPC",              pfx="$", fmt="{:.2f}",   cur=_s_alrt["cpc"],
+             op="gt", default=1.2, step=0.05,
+             trend="↑ 当前$0.82，竞价趋紧，近期小幅上涨",
+             risk_cause="旺季竞品加大广告预算，热词CPC将持续攀升，广告成本压力加大",
+             rec="拓展3-4词长尾词降低平均CPC，目标整体CPC控制在$0.90以内"),
+        dict(key="acos",   label="ACOS (%)",         pfx="",  fmt="{:.1f}%",  cur=_s_alrt["acos"],
+             op="gt", default=25.0, step=0.5,
+             trend="→ 整体28.5%；SP-Broad 32.4%, Auto 33.8%均偏高",
+             risk_cause="Broad和Auto活动ACOS超30%，预算存在浪费；旺季竞价将进一步推高ACOS",
+             rec="将Broad/Auto预算转向Exact精准词，严控单个关键词ACOS上限35%"),
+    ]
+
+    st.markdown("""<div class="mod-header" style="border-left-color:#f59e0b"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:17px;font-weight:700;color:#f1f5f9">⚙️ 预警参数配置</span><span style="background:rgba(245,158,11,0.13);color:#f59e0b;border:1px solid rgba(245,158,11,0.27);border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600">自动监控</span></div></div>""", unsafe_allow_html=True)
+
+    with st.expander("📋 选择监控指标 · 设置预警阈值", expanded=True):
+        st.markdown('<p style="color:#94a3b8;font-size:12px;margin:0 0 10px">选择需要日常监控的指标并设定预警阈值，系统将自动对比当日数据并生成预警报告。<span style="color:#fbbf24;font-weight:600"> 低于阈值</span>触发低位预警（销量/毛利率/CTR/CVR），<span style="color:#ef4444;font-weight:600"> 高于阈值</span>触发高位预警（排名位次/CPO/CPC/ACOS）。</p>', unsafe_allow_html=True)
+        _all_lbl = [m["label"] for m in _mdef]
+        _sel_alrt = st.multiselect("监控指标", options=_all_lbl,
+            default=["日均销量 (件)", "CTR (%)", "CVR (%)", "ACOS (%)"],
+            key="alrt_sel", label_visibility="collapsed")
+        _thr_alrt = {}
+        if _sel_alrt:
+            _sm = [m for m in _mdef if m["label"] in _sel_alrt]
+            _nc2 = min(len(_sm), 4)
+            _co2 = st.columns(_nc2)
+            for _si, _sv in enumerate(_sm):
+                with _co2[_si % _nc2]:
+                    _da = "低于预警" if _sv["op"] == "lt" else "高于预警"
+                    _fs = "%.0f" if _sv["step"] >= 1 else ("%.1f" if _sv["step"] >= 0.1 else "%.2f")
+                    _thr_alrt[_sv["key"]] = st.number_input(
+                        f"{_sv['label']} ({_da})", value=float(_sv["default"]),
+                        step=float(_sv["step"]), format=_fs, key=f"alrt_t_{_sv['key']}")
+
+    st.markdown("""<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px"><span style="font-size:15px;font-weight:700;color:#f1f5f9">🚨 今日预警报告</span><span style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:2px 10px;font-size:11px;color:#64748b">基于当日实时数据 · 自动生成</span></div>""", unsafe_allow_html=True)
+
+    if not _sel_alrt:
+        st.markdown('<p style="color:#64748b;font-size:13px;padding:12px;background:#1e293b;border-radius:8px;margin:0">请在上方选择至少一个监控指标以生成预警报告。</p>', unsafe_allow_html=True)
+    else:
+        _trg, _nrm = [], []
+        for _mv in _mdef:
+            if _mv["label"] not in _sel_alrt:
+                continue
+            _th = _thr_alrt.get(_mv["key"], float(_mv["default"]))
+            _cv = _mv["cur"]
+            if (_mv["op"] == "lt" and _cv < _th) or (_mv["op"] == "gt" and _cv > _th):
+                _trg.append({**_mv, "thresh": _th})
+            else:
+                _nrm.append({**_mv, "thresh": _th})
+        if not _trg:
+            st.markdown(f'<div style="background:linear-gradient(135deg,#0a1f15,#0f1f2e);border:1px solid #16a34a;border-radius:10px;padding:14px 18px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#4ade80">\u2705 所有 {len(_nrm)} 项监控指标均正常，无预警触发</div><div style="font-size:12px;color:#6b7280;margin-top:4px">当前数据表现良好，建议维持现有策略并持续关注。</div></div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div style="background:#1a0a0a;border:1px solid #dc2626;border-radius:8px;padding:10px 16px;margin-bottom:12px"><span style="font-size:13px;color:#fca5a5;font-weight:600">\u26a0\ufe0f 检测到 <b style="color:#ef4444;font-size:16px">{len(_trg)}</b> 项指标触发预警，请及时关注并采取行动。</span></div>', unsafe_allow_html=True)
+            for _at in _trg:
+                _dw = "低于" if _at["op"] == "lt" else "高于"
+                _cf = _at["pfx"] + _at["fmt"].format(_at["cur"])
+                _tf = _at["pfx"] + _at["fmt"].format(_at["thresh"])
+                st.markdown(f'<div style="background:#1e293b;border:1px solid #ef4444;border-left:4px solid #ef4444;border-radius:10px;padding:16px 20px;margin-bottom:12px"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px"><div><span style="font-size:14px;font-weight:700;color:#f1f5f9">\U0001f534 {_at["label"]}</span><span style="margin-left:10px;background:rgba(239,68,68,0.13);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:5px;padding:1px 8px;font-size:11px">预警触发</span></div><div style="text-align:right"><span style="font-size:18px;font-weight:700;color:#ef4444">{_cf}</span><span style="font-size:11px;color:#64748b;margin-left:6px">{_dw}阈值 {_tf}</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div style="background:#0f172a;border-radius:8px;padding:10px 12px"><div style="font-size:10px;color:#64748b;margin-bottom:4px">趋势</div><div style="font-size:12px;color:#cbd5e1">{_at["trend"]}</div></div><div style="background:#0f172a;border-radius:8px;padding:10px 12px"><div style="font-size:10px;color:#64748b;margin-bottom:4px">风险原因</div><div style="font-size:12px;color:#fbbf24">{_at["risk_cause"]}</div></div></div><div style="background:#0d1f3c;border:1px solid #1e40af;border-radius:8px;padding:10px 14px"><div style="font-size:10px;color:#60a5fa;margin-bottom:4px;font-weight:600">\U0001f4a1 运营建议</div><div style="font-size:12px;color:#e2e8f0">{_at["rec"]}</div></div></div>', unsafe_allow_html=True)
+        if _nrm:
+            _np = []
+            for _nm in _nrm:
+                _nlb = _nm["label"]
+                _ncf = _nm["pfx"] + _nm["fmt"].format(_nm["cur"])
+                _ntf = _nm["pfx"] + _nm["fmt"].format(_nm["thresh"])
+                _np.append(f'<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e293b"><span style="font-size:12px;color:#94a3b8">{_nlb}</span><div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:600;color:#4ade80">{_ncf}</span><span style="font-size:11px;color:#475569">阈值 {_ntf}</span><span style="font-size:10px;background:rgba(22,163,74,0.13);color:#4ade80;border-radius:4px;padding:1px 6px">\u2713</span></div></div>')
+            _nh = "".join(_np)
+            st.markdown(f'<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 16px;margin-top:8px"><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">\U0001f4ca 其他监控指标（正常）</div>{_nh}</div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:16px"></div>', unsafe_allow_html=True)
+    # ═══ END 预警参数配置 & 预警报告 ═══════════════════════════════
+
     st.markdown(f"""
     <div class="mod-header" style="border-left-color:#a78bfa">
       <div style="display:flex;align-items:center;gap:10px">
