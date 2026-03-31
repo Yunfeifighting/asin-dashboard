@@ -637,9 +637,9 @@ def render_category():
         ), row=2, col=1, secondary_y=True)
         fig.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
-            font=dict(color="#94a3b8", size=10),
+            font=dict(color="#e2e8f0", size=10),
             height=440, margin=dict(l=10, r=80, t=55, b=10),
-            legend=dict(font=dict(size=9), bgcolor="rgba(15,23,42,0.7)",
+            legend=dict(font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.9)",
                         bordercolor="#334155", borderwidth=1,
                         orientation="v", x=1.08, y=1,),
             hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
@@ -730,21 +730,25 @@ def render_brand():
         }
         fig_bst = go.Figure()
         for brand, color in brand_colors_map.items():
-            lw = 2.5 if brand == "SoundMax" else 1.5
-            dash = "solid" if brand == "SoundMax" else "dot"
-            fig_bst.add_trace(go.Scatter(
-                x=dates, y=bst[brand], name=brand,
-                line=dict(color=color, width=lw, dash=dash),
-                mode="lines+markers",
-                marker=dict(size=5 if brand=="SoundMax" else 3, color=color),
+            vals = bst[brand]
+            fig_bst.add_trace(go.Bar(
+                x=dates, y=vals, name=brand,
+                marker_color=color,
+                text=[f"{v}%" for v in vals],
+                textposition="outside",
+                textfont=dict(size=7, color="#e2e8f0"),
             ))
         fig_bst.update_layout(dark_layout(
-            title="6大品牌市场份额趋势 — 7日走势 (橙色=SoundMax)",
-            height=260,
-            margin=dict(l=10, r=10, t=45, b=10),
-            legend=dict(font=dict(size=9), bgcolor="rgba(15,23,42,0.7)",
+            title="6大品牌市场份额趋势 — 7日走势",
+            height=320,
+            margin=dict(l=10, r=10, t=45, b=70),
+            barmode="group",
+            bargap=0.15,
+            bargroupgap=0.05,
+            uniformtext=dict(minsize=6, mode="hide"),
+            legend=dict(font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.8)",
                         bordercolor="#334155", borderwidth=1,
-                        orientation="h", x=0, y=1.22),
+                        orientation="h", x=0, y=-0.3, xanchor="left"),
             yaxis_title="份额(%)",
         ))
         st.plotly_chart(fig_bst, use_container_width=True, config=plotly_cfg())
@@ -812,7 +816,36 @@ def render_competitors():
         st.markdown('<div class="risk-box" style="margin-top:10px"><span style="font-weight:600">⚠ 最大风险：</span>评论量极度不足，在同类搜索页面中信任感最低，严重拖累转化率。</div>', unsafe_allow_html=True)
         st.markdown('<div class="prio-box" style="margin-top:6px"><span style="font-weight:600">→ 优先优化：</span>30天内Review糭还果2000是单一最高ROI动作，优先于任何广告优化。</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
-        st.markdown(action_list([
+        # 竞品单品销量趋势图
+    comp_colors_list = ["#38bdf8", "#f472b6", "#4ade80", "#fbbf24", "#a78bfa"]
+    dates_c = ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"]
+    fig_ct = go.Figure()
+    import random as _rnd
+    _rnd.seed(42)
+    for i, c in enumerate(comps[:5]):
+        base = c["sales"]
+        vals_c = [max(0, int(base * (1 + (j-3)*0.03 + (_rnd.random()-0.5)*0.08))) for j in range(7)]
+        lbl = f"{c['brand']} ({c['asin'][:6]})"
+        clr = comp_colors_list[i % len(comp_colors_list)]
+        fig_ct.add_trace(go.Scatter(
+            x=dates_c, y=vals_c, name=lbl,
+            mode="lines+markers",
+            line=dict(color=clr, width=2.5 if c.get("ours") else 1.5,
+                      dash="solid" if c.get("ours") else "dot"),
+            marker=dict(size=6 if c.get("ours") else 4, color=clr),
+        ))
+    fig_ct.update_layout(dark_layout(
+        title="竞品单品销量趋势对比 — 7日走势 (实线=本品)",
+        height=280,
+        margin=dict(l=10, r=10, t=45, b=10),
+        legend=dict(font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.8)",
+                    bordercolor="#334155", borderwidth=1,
+                    orientation="v", x=1.01, y=1, xanchor="left"),
+        yaxis_title="日销量(件)",
+    ))
+    st.plotly_chart(fig_ct, use_container_width=True, config=plotly_cfg())
+
+    st.markdown(action_list([
             "优先刷新 Review 数量：批量发送 Request a Review，目标30天内破2000",
             "Price 压至 $42.99 测试是否提升 CVR 并赶超 Tribit",
             "补充 Lifestyle 图和对比图，提升 Listing 质量分",
