@@ -394,6 +394,8 @@ def render_sidebar():
         ("🎯", "竞品分析",   "sec-competitor", scores["competition"], 20),
         ("🔍", "关键词分析", "sec-keywords",   scores["keywords"],    20),
         ("💰", "广告分析",   "sec-ads",        scores["ads"],         20),
+        ("⚙️", "预警配置",   "sec-alert-config", None,                  None),
+        ("🚨", "今日预警",   "sec-alert-report", None,                  None),
         ("📋", "30天方案",   "sec-plan",       None,                  None),
     ]
 
@@ -1171,6 +1173,7 @@ def render_action_plan():
              rec="将Broad/Auto预算转向Exact精准词，严控单个关键词ACOS上限35%"),
     ]
 
+    st.markdown('<div id="sec-alert-config" class="sec-anchor"></div>', unsafe_allow_html=True)
     st.markdown("""<div class="mod-header" style="border-left-color:#f59e0b"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:17px;font-weight:700;color:#f1f5f9">⚙️ 预警参数配置</span><span style="background:rgba(245,158,11,0.13);color:#f59e0b;border:1px solid rgba(245,158,11,0.27);border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600">自动监控</span></div></div>""", unsafe_allow_html=True)
 
     with st.expander("📋 选择监控指标 · 设置预警阈值", expanded=True):
@@ -1192,6 +1195,7 @@ def render_action_plan():
                         f"{_sv['label']} ({_da})", value=float(_sv["default"]),
                         step=float(_sv["step"]), format=_fs, key=f"alrt_t_{_sv['key']}")
 
+    st.markdown('<div id="sec-alert-report" class="sec-anchor"></div>', unsafe_allow_html=True)
     st.markdown("""<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px"><span style="font-size:15px;font-weight:700;color:#f1f5f9">🚨 今日预警报告</span><span style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:2px 10px;font-size:11px;color:#64748b">基于当日实时数据 · 自动生成</span></div>""", unsafe_allow_html=True)
 
     if not _sel_alrt:
