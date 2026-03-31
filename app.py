@@ -64,12 +64,16 @@ button[kind="primary"], .stButton > button {
 
 /* ── expanders ── */
 [data-testid="stExpander"] {
-  background:rgba(30,41,59,0.35) !important;
-  border:1px solid rgba(71,85,105,0.5) !important; border-radius:0 0 12px 12px !important;
+  background:rgba(37,99,235,0.12) !important;
+  border:1px solid rgba(59,130,246,0.45) !important; border-radius:0 0 12px 12px !important;
   border-top:none !important;
+  cursor:pointer;
 }
-[data-testid="stExpander"] summary { color:#94a3b8 !important; font-weight:500 !important; font-size:12px !important; }
-[data-testid="stExpander"] summary:hover { color:#93c5fd !important; }
+[data-testid="stExpander"] summary {
+  color:#93c5fd !important; font-weight:600 !important; font-size:12px !important;
+  background:rgba(59,130,246,0.10) !important; border-radius:8px; padding:8px 12px !important;
+}
+[data-testid="stExpander"] summary:hover { color:#bfdbfe !important; background:rgba(59,130,246,0.20) !important; }
 
 /* ── tabs ── */
 [data-testid="stTabs"] [role="tablist"] { background:#1e293b; border-radius:8px; padding:2px; border:1px solid #334155; }
@@ -860,82 +864,67 @@ def render_action_plan():
     with st.expander("展开详情", expanded=True):
         col_a, col_b = st.columns(2)
 
-        def plan_actions_html(actions):
+        def plan_action_row(p, action, impact, d):
             p_class = {"P0":"p0","P1":"p1","P2":"p2"}
-            rows = ""
-            for a in actions:
-                rows += f"""
-                <div style="display:flex;align-items:flex-start;gap:8px;background:rgba(30,41,59,0.6);border-radius:8px;padding:10px;margin-bottom:6px">
-                  <span class="{p_class[a['p']]}">{a['p']}</span>
-                  <div style="flex:1">
-                    <div style="font-size:12px;color:white">{a['action']}</div>
-                    <div style="font-size:11px;color:#64748b;margin-top:2px">{a['impact']}</div>
-                  </div>
-                  <span style="font-size:10px;color:#475569;flex-shrink:0">{a['d']}</span>
-                </div>"""
-            return rows
+            return ('<div style="display:flex;align-items:flex-start;gap:8px;background:rgba(30,41,59,0.6);border-radius:8px;padding:10px;margin-bottom:6px">'
+                    + '<span class="' + p_class[p] + '">' + p + '</span>'
+                    + '<div style="flex:1">'
+                    + '<div style="font-size:12px;color:white">' + action + '</div>'
+                    + '<div style="font-size:11px;color:#64748b;margin-top:2px">' + impact + '</div>'
+                    + '</div>'
+                    + '<span style="font-size:10px;color:#475569;flex-shrink:0">' + d + '</span>'
+                    + '</div>')
 
         with col_a:
-            actions_a = [
-                {"p":"P0","action":"暂停 'waterproof speaker' 和 'ipx7 speaker' 广告词","impact":"节省约$376/月无效花费","d":"D1"},
-                {"p":"P1","action":"将售价从 $45.99 提升至 $47.99 A/B测试一周","impact":"利润率提升约4%，观察 CVR 变化","d":"D3"},
-                {"p":"P1","action":"提高 'small bluetooth speaker' 预算20%（ACOS 20.1%）","impact":"预估新增约40次转化/月","d":"D5"},
-                {"p":"P2","action":"优化 Listing Title 自然植入 'waterproof' 词","impact":"提升该词自然流量，减少广告依赖","d":"D7"},
-                {"p":"P2","action":"申请 A+ Content（若未开通）","impact":"预估 CVR 提升5-8%","d":"D14"},
-            ]
-            st.markdown(f"""
-            <div class="plan-card plan-a">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:13px;font-weight:700;color:#60a5fa">方案 A · 利润最大化</span>
-                <div style="text-align:right">
-                  <div style="font-size:10px;color:#64748b">成功概率</div>
-                  <div style="font-size:22px;font-weight:800;color:#60a5fa">62%</div>
-                </div>
-              </div>
-              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">削减低效广告花费，小幅提价，聚焦高 ROAS 词，预计30天利润提升约37%。</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-                <div class="p-card"><div class="diag-label">目标利润/月</div><div style="font-size:15px;font-weight:700;color:white">$8,500</div><div style="font-size:11px;color:#34d399">+37% vs 当前</div></div>
-                <div class="p-card"><div class="diag-label">当前利润/月</div><div style="font-size:15px;font-weight:700;color:#94a3b8">$6,200</div></div>
-              </div>
-              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>
-              {plan_actions_html(actions_a)}
-              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">
-                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ 提价初期可能带来 CVR 短暂下滑</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ 削减广告可能影响 BSR 排名动能</div>
-              </div>
-            </div>""", unsafe_allow_html=True)
+            actions_a_html = ""
+            actions_a_html += plan_action_row("P0", "暂停 waterproof speaker 和 ipx7 speaker 广告词", "节省约$376/月无效花费", "D1")
+            actions_a_html += plan_action_row("P1", "将售价从 $45.99 提升至 $47.99 A/B测试一周", "利润率提升约4%，观察 CVR 变化", "D3")
+            actions_a_html += plan_action_row("P1", "提高 small bluetooth speaker 预算20%（ACOS 20.1%）", "预估新增约40次转化/月", "D5")
+            actions_a_html += plan_action_row("P2", "优化 Listing Title 自然植入 waterproof 词", "提升该词自然流量，减少广告依赖", "D7")
+            actions_a_html += plan_action_row("P2", "申请 A+ Content（若未开通）", "预估 CVR 提升5-8%", "D14")
+            html_a = ('<div class="plan-card plan-a">'
+                + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+                + '<span style="font-size:13px;font-weight:700;color:#60a5fa">方案 A · 利润最大化</span>'
+                + '<div style="text-align:right"><div style="font-size:10px;color:#64748b">成功概率</div>'
+                + '<div style="font-size:22px;font-weight:800;color:#60a5fa">62%</div></div></div>'
+                + '<div style="font-size:11px;color:#94a3b8;margin-bottom:12px">削减低效广告花费，小幅提价，聚焦高 ROAS 词，预计30天利润提升约37%。</div>'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+                + '<div class="p-card"><div class="diag-label">目标利润/月</div><div style="font-size:15px;font-weight:700;color:white">$8,500</div><div style="font-size:11px;color:#34d399">+37% vs 当前</div></div>'
+                + '<div class="p-card"><div class="diag-label">当前利润/月</div><div style="font-size:15px;font-weight:700;color:#94a3b8">$6,200</div></div></div>'
+                + '<div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>'
+                + actions_a_html
+                + '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">'
+                + '<div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>'
+                + '<div style="font-size:11px;color:#94a3b8">⚠ 提价初期可能带来 CVR 短暂下滑</div>'
+                + '<div style="font-size:11px;color:#94a3b8">⚠ 削减广告可能影响 BSR 排名动能</div>'
+                + '</div></div>')
+            st.markdown(html_a, unsafe_allow_html=True)
 
         with col_b:
-            actions_b = [
-                {"p":"P0","action":"总广告预算提升至 $4,200/月（+48%）","impact":"预估新增约450次点击/月","d":"D1"},
-                {"p":"P0","action":"30天内 Review 数量破 2000（Request a Review）","impact":"提升搜索权重和转化率","d":"D1"},
-                {"p":"P1","action":"开启 Sponsored Brands 视频广告","impact":"提升上层流量认知","d":"D5"},
-                {"p":"P1","action":"补充 2 张 Lifestyle 图 + 1 张对比图","impact":"预估 CTR 提升3-5%","d":"D7"},
-                {"p":"P2","action":"将售价降至 $42.99 配合 Coupon 5%","impact":"提升 CVR，争抢 Tribit 价格段","d":"D10"},
-            ]
-            st.markdown(f"""
-            <div class="plan-card plan-b">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:13px;font-weight:700;color:#34d399">方案 B · 日均销量提升30%</span>
-                <div style="text-align:right">
-                  <div style="font-size:10px;color:#64748b">成功概率</div>
-                  <div style="font-size:22px;font-weight:800;color:#34d399">55%</div>
-                </div>
-              </div>
-              <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">加大广告投入并优化关键词自然排名，同步提升 Listing 质量，目标月销量破 1274 单。</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-                <div class="p-card"><div class="diag-label">目标月销量</div><div style="font-size:15px;font-weight:700;color:white">1,274件</div><div style="font-size:11px;color:#34d399">+30% vs 当前</div></div>
-                <div class="p-card"><div class="diag-label">当前月销量</div><div style="font-size:15px;font-weight:700;color:#94a3b8">980件</div></div>
-              </div>
-              <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>
-              {plan_actions_html(actions_b)}
-              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">
-                <div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ 初期 ACOS 预计升至32-35%，需接受短期效率牺牲</div>
-                <div style="font-size:11px;color:#94a3b8">⚠ Review 增长需4-6周才能体现在搜索权重上</div>
-              </div>
-            </div>""", unsafe_allow_html=True)
+            actions_b_html = ""
+            actions_b_html += plan_action_row("P0", "总广告预算提升至 $4,200/月（+48%）", "预估新增约450次点击/月", "D1")
+            actions_b_html += plan_action_row("P0", "30天内 Review 数量破 2000（Request a Review）", "提升搜索权重和转化率", "D1")
+            actions_b_html += plan_action_row("P1", "开启 Sponsored Brands 视频广告", "提升上层流量认知", "D5")
+            actions_b_html += plan_action_row("P1", "补充 2 张 Lifestyle 图 + 1 张对比图", "预估 CTR 提升3-5%", "D7")
+            actions_b_html += plan_action_row("P2", "将售价降至 $42.99 配合 Coupon 5%", "提升 CVR，争抢 Tribit 价格段", "D10")
+            html_b = ('<div class="plan-card plan-b">'
+                + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+                + '<span style="font-size:13px;font-weight:700;color:#34d399">方案 B · 日均销量提升30%</span>'
+                + '<div style="text-align:right"><div style="font-size:10px;color:#64748b">成功概率</div>'
+                + '<div style="font-size:22px;font-weight:800;color:#34d399">55%</div></div></div>'
+                + '<div style="font-size:11px;color:#94a3b8;margin-bottom:12px">加大广告投入并优化关键词自然排名，同步提升 Listing 质量，目标月销量破 1274 单。</div>'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+                + '<div class="p-card"><div class="diag-label">目标月销量</div><div style="font-size:15px;font-weight:700;color:white">1,274件</div><div style="font-size:11px;color:#34d399">+30% vs 当前</div></div>'
+                + '<div class="p-card"><div class="diag-label">当前月销量</div><div style="font-size:15px;font-weight:700;color:#94a3b8">980件</div></div></div>'
+                + '<div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">关键动作清单</div>'
+                + actions_b_html
+                + '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;margin-top:8px">'
+                + '<div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:4px">风险提示</div>'
+                + '<div style="font-size:11px;color:#94a3b8">⚠ 初期 ACOS 预计升至32-35%，需接受短期效率牺牲</div>'
+                + '<div style="font-size:11px;color:#94a3b8">⚠ Review 增长需4-6周才能体现在搜索权重上</div>'
+                + '</div></div>')
+            st.markdown(html_b, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────────────────────
 # FOOTER
