@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 import time
 
@@ -163,9 +164,9 @@ table.dtbl tr:hover td { background:rgba(51,65,85,0.3); }
   background:linear-gradient(90deg,#60a5fa,#a78bfa);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
 }
-.nav-logo-sub { font-size:10px; color:#475569; margin-top:2px; }
+.nav-logo-sub { font-size:10px; color:#64748b; margin-top:2px; }
 .nav-section { padding:4px 8px; margin:0 8px; }
-.nav-section-label { font-size:10px; color:#475569; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; padding:6px 8px 4px 8px; }
+.nav-section-label { font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; padding:6px 8px 4px 8px; }
 .nav-item {
   display:flex; align-items:center; gap:8px;
   padding:7px 10px; border-radius:8px; margin-bottom:2px;
@@ -209,7 +210,7 @@ MOCK = {
         "listingQualityScore": 72, "bsr": 247,
         "features": ["IPX7 Waterproof","24H Battery","360° Sound","Dual Pairing","USB-C"],
     },
-    "scores": {"category":9,"brand":7,"competition":13,"keywords":14,"ads":14,"listing":10,"total":67},
+    "scores": {"category":15,"brand":10,"competition":20,"keywords":20,"ads":20,"listing":15,"total":100},
     "scoreMeta": [
         {"key":"category",    "label":"品类表现",     "max":15},
         {"key":"brand",       "label":"品牌表现",     "max":10},
@@ -221,6 +222,8 @@ MOCK = {
     "trend_dates":   ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"],
     "our_sales":     [42, 38, 45, 41, 37, 34, 33],
     "cat_avg":       [35, 36, 38, 37, 38, 37, 39],
+    "share_trend":   [1.8, 1.7, 1.9, 1.7, 1.6, 1.5, 1.5],
+    "bsr_trend":     [211, 219, 208, 218, 228, 236, 247],
     "top10_avg":     [180,185,190,188,192,189,195],
     "cat_share":     [1.9,1.8,2.0,1.8,1.7,1.5,1.5],
     "top_brands": [
@@ -400,7 +403,7 @@ def render_sidebar():
           <div style="display:flex;align-items:center;gap:8px;background:rgba(30,41,59,0.5);border:1px solid rgba(71,85,105,0.4);border-radius:8px;padding:8px 10px;margin-top:8px">
             <div style="text-align:center">
               <div style="font-size:22px;font-weight:800;color:{ring_clr};line-height:1">{total}</div>
-              <div style="font-size:9px;color:#475569">/100</div>
+              <div style="font-size:9px;color:#64748b">/100</div>
             </div>
             <div style="flex:1">
               <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">综合健康分</div>
@@ -414,7 +417,7 @@ def render_sidebar():
         <div class="nav-section-label">模块导航</div>
         {items_html}
         <div class="nav-divider"></div>
-        <div style="padding:8px 18px;font-size:10px;color:#334155;line-height:1.6">
+        <div style="padding:8px 18px;font-size:10px;color:#64748b;line-height:1.6">
           模拟数据模式<br>可替换为真实 API
         </div>
         """, unsafe_allow_html=True)
@@ -585,13 +588,57 @@ def render_category():
                   <div class="diag-sub">{sub}</div>
                 </div>""", unsafe_allow_html=True)
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["our_sales"], name="我方销量",
-            line=dict(color="#60a5fa", width=2), fill="tozeroy",
-            fillcolor="rgba(96,165,250,0.1)"))
-        fig.add_trace(go.Scatter(x=d["trend_dates"], y=d["cat_avg"], name="类目均值",
-            line=dict(color="#a78bfa", width=1.5, dash="dash")))
-        fig.update_layout(dark_layout(title="7日销量趋势对比", height=200))
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=("7日销量趋势对比", "7日类目份额 & BSR排名走势"),
+            specs=[[{}], [{"secondary_y": True}]],
+            vertical_spacing=0.18,
+        )
+        fig.add_trace(go.Scatter(
+            x=d["trend_dates"], y=d["our_sales"], name="我方销量",
+            line=dict(color="#60a5fa", width=2),
+            fill="tozeroy", fillcolor="rgba(96,165,250,0.08)",
+            mode="lines+markers", marker=dict(size=4, color="#60a5fa"),
+        ), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=d["trend_dates"], y=d["cat_avg"], name="类目均値",
+            line=dict(color="#a78bfa", width=1.5, dash="dash"),
+            mode="lines",
+        ), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=d["trend_dates"], y=d["share_trend"], name="类目份额(%)",
+            line=dict(color="#34d399", width=2),
+            mode="lines+markers", marker=dict(size=4, color="#34d399"),
+        ), row=2, col=1, secondary_y=False)
+        fig.add_trace(go.Scatter(
+            x=d["trend_dates"], y=d["bsr_trend"], name="BSR排名↓越低越好",
+            line=dict(color="#fb923c", width=2, dash="dash"),
+            mode="lines+markers", marker=dict(size=4, color="#fb923c"),
+        ), row=2, col=1, secondary_y=True)
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
+            font=dict(color="#94a3b8", size=10),
+            height=400, margin=dict(l=10, r=60, t=40, b=10),
+            legend=dict(font=dict(size=9), bgcolor="rgba(0,0,0,0)",
+                        orientation="h", y=1.08, x=0),
+            hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
+                            font=dict(color="#e2e8f0", size=11)),
+        )
+        fig.update_xaxes(gridcolor="#1e293b", linecolor="#334155", tickfont=dict(size=9))
+        fig.update_yaxes(gridcolor="#1e293b", linecolor="#334155",
+                         tickfont=dict(size=9), row=1, col=1)
+        fig.update_yaxes(title_text="销量(件)", title_font=dict(size=9),
+                         tickfont=dict(size=9, color="#94a3b8"),
+                         gridcolor="#1e293b", row=1, col=1)
+        fig.update_yaxes(title_text="份额(%)", title_font=dict(color="#34d399", size=9),
+                         tickfont=dict(size=9, color="#34d399"),
+                         gridcolor="#1e293b",
+                         secondary_y=False, row=2, col=1)
+        fig.update_yaxes(title_text="BSR排名", title_font=dict(color="#fb923c", size=9),
+                         tickfont=dict(size=9, color="#fb923c"),
+                         gridcolor="rgba(0,0,0,0)", autorange="reversed",
+                         secondary_y=True, row=2, col=1)
+        fig.update_annotations(font=dict(color="#94a3b8", size=10))
         st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
 
         brands = d["top_brands"]
@@ -872,7 +919,7 @@ def render_action_plan():
                     + '<div style="font-size:12px;color:white">' + action + '</div>'
                     + '<div style="font-size:11px;color:#64748b;margin-top:2px">' + impact + '</div>'
                     + '</div>'
-                    + '<span style="font-size:10px;color:#475569;flex-shrink:0">' + d + '</span>'
+                    + '<span style="font-size:10px;color:#94a3b8;flex-shrink:0">' + d + '</span>'
                     + '</div>')
 
         with col_a:
@@ -987,7 +1034,7 @@ def main():
             </div>""", unsafe_allow_html=True)
 
     st.markdown("""
-    <div style="font-size:11px;color:#475569;margin-top:4px;display:flex;gap:12px;align-items:center">
+    <div style="font-size:11px;color:#64748b;margin-top:4px;display:flex;gap:12px;align-items:center">
       <span>示例：</span>
       <span style="font-family:monospace">B0D54LVZK5</span>
       <span style="font-family:monospace">B08N5WRWNW</span>
