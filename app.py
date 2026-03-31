@@ -193,6 +193,16 @@ table.dtbl tr:hover td { background:rgba(51,65,85,0.3); }
   background:rgba(59,130,246,0.1); border:1px solid rgba(96,165,250,0.25);
   padding:3px 9px; border-radius:5px;
 }
+
+/* ── Widget labels: visible on dark theme ── */
+[data-testid="stNumberInput"] label,
+[data-testid="stMultiSelect"] label,
+[data-testid="stSelectbox"] label,
+[data-testid="stTextInput"] label {
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
