@@ -27,6 +27,13 @@ footer { display:none !important; }
   background:rgba(10,17,35,0.98) !important;
   border-right:1px solid rgba(71,85,105,0.35) !important;
   min-width:190px !important; max-width:190px !important;
+  transform: none !important;
+  left: 0 !important;
+}
+/* Hide sidebar collapse/expand buttons — sidebar always stays visible */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"] {
+  display: none !important;
 }
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] { padding:0; }
 [data-testid="stSidebarContent"] { padding:0 !important; }
