@@ -396,7 +396,7 @@ def render_sidebar():
         ("💰", "广告分析",   "sec-ads",        scores["ads"],         20),
         ("⚙️", "预警配置",   "sec-alert-config", None,                  None),
         ("🚨", "今日预警",   "sec-alert-report", None,                  None),
-        ("📋", "30天方案",   "sec-plan",       None,                  None),
+        ("📋", "未来3天运营方案",   "sec-future",       None,                  None),
     ]
 
     total = scores["total"]
@@ -1232,11 +1232,12 @@ def render_action_plan():
     st.markdown('<div style="height:16px"></div>', unsafe_allow_html=True)
     # ═══ END 预警参数配置 & 预警报告 ═══════════════════════════════
 
+    st.markdown('<div id="sec-future" class="sec-anchor"></div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="mod-header" style="border-left-color:#a78bfa">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:16px">📋</span>
-        <span class="mod-title">未来30天目标与运营方案</span>
+        <span class="mod-title">未来3天运营方案</span>
       </div>
     </div>""", unsafe_allow_html=True)
     with st.expander("展开详情", expanded=True):
