@@ -110,12 +110,12 @@ button[kind="primary"], .stButton > button {
 .badge-excellent { background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(52,211,153,0.4); }
 .badge-good      { background:rgba(59,130,246,0.15); color:#60a5fa; border-color:rgba(96,165,250,0.4); }
 .badge-normal    { background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(251,191,36,0.4); }
-.badge-bad       { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
+.badge-bad       { background:rgba(239,68,68,0.15);  color:#e2e8f0; border-color:rgba(248,113,113,0.4); }
 .badge-opp       { background:rgba(59,130,246,0.15); color:#60a5fa; border-color:rgba(96,165,250,0.4); }
-.badge-risk      { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
+.badge-risk      { background:rgba(239,68,68,0.15);  color:#e2e8f0; border-color:rgba(248,113,113,0.4); }
 .badge-stable    { background:rgba(100,116,139,0.2); color:#94a3b8; border-color:rgba(148,163,184,0.3); }
 .badge-warn      { background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(251,191,36,0.4); }
-.badge-abn       { background:rgba(239,68,68,0.15);  color:#f87171; border-color:rgba(248,113,113,0.4); }
+.badge-abn       { background:rgba(239,68,68,0.15);  color:#e2e8f0; border-color:rgba(248,113,113,0.4); }
 
 /* ── judgment boxes ── */
 .judge-warn { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:10px 14px; font-size:12px; color:#fcd34d; margin:10px 0; }
@@ -137,7 +137,7 @@ table.dtbl { width:100%; border-collapse:collapse; font-size:12px; }
 table.dtbl th { background:rgba(51,65,85,0.6); color:#94a3b8; padding:8px 12px; text-align:left; font-weight:500; border-bottom:1px solid rgba(71,85,105,0.5); white-space:nowrap; }
 table.dtbl td { padding:8px 12px; color:#cbd5e1; border-bottom:1px solid rgba(71,85,105,0.35); }
 table.dtbl tr:hover td { background:rgba(51,65,85,0.3); }
-.red-val { color:#f87171; font-weight:700; }
+.red-val { color:#e2e8f0; font-weight:700; }
 .green-val { color:#34d399; font-weight:700; }
 .amber-val { color:#fbbf24; font-weight:700; }
 .blue-val { color:#60a5fa; }
@@ -146,7 +146,7 @@ table.dtbl tr:hover td { background:rgba(51,65,85,0.3); }
 .plan-card { border-radius:12px; padding:20px; }
 .plan-a { background:rgba(59,130,246,0.06); border:1px solid rgba(96,165,250,0.3); }
 .plan-b { background:rgba(16,185,129,0.06); border:1px solid rgba(52,211,153,0.3); }
-.p0 { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(248,113,113,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
+.p0 { background:rgba(239,68,68,0.12); color:#e2e8f0; border:1px solid rgba(248,113,113,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
 .p1 { background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
 .p2 { background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(96,165,250,0.3); padding:2px 7px; border-radius:4px; font-size:11px; font-weight:700; }
 
@@ -312,7 +312,7 @@ def score_color(pct):
     if pct >= 90: return "#34d399"
     if pct >= 75: return "#60a5fa"
     if pct >= 60: return "#fbbf24"
-    return "#f87171"
+    return "#e2e8f0"
 
 def mod_header(icon, title, badge_key, score, max_score):
     """Styled module section header with background + highlighted title."""
@@ -382,7 +382,7 @@ def render_sidebar():
 
     total = scores["total"]
     overall = status_of(total)
-    c_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+    c_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#e2e8f0"}
     ring_clr = c_map[overall]
 
     items_html = ""
@@ -460,7 +460,7 @@ def render_overview(asin):
     meta = MOCK["scoreMeta"]
     total = scores["total"]
     overall = status_of(total)
-    color_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+    color_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#e2e8f0"}
     ring_color = color_map[overall]
 
     st.markdown('<div id="sec-overview" class="sec-anchor"></div>', unsafe_allow_html=True)
@@ -483,7 +483,7 @@ def render_overview(asin):
                 ("品牌",p["brand"],"#60a5fa"),
                 ("价格",f"${p['price']}","white"),
                 ("评分/评论",f"{p['rating']}★ / {p['reviewCount']:,}","#fbbf24"),
-                ("BSR",f"#{p['bsr']}","#f87171"),
+                ("BSR",f"#{p['bsr']}","#e2e8f0"),
                 ("库存",p["inventoryStatus"],"#34d399"),
                 ("Buy Box",f"{p['buyBoxStatus']} ({p['buyBoxWinRate']}%)","white"),
                 ("Listing分",f"{p['listingQualityScore']}/100","#fbbf24"),
@@ -549,7 +549,7 @@ def render_overview(asin):
         "开启 Sponsored Brands 视频广告，提升品牌认知",
     ]
     for col, title, icon, color, items in [
-        (c1, "核心问题 Top 3", "⚠", "#f87171", issues),
+        (c1, "核心问题 Top 3", "⚠", "#e2e8f0", issues),
         (c2, "核心机会 Top 3", "◎", "#60a5fa", opportunities),
         (c3, "建议动作 Top 3", "⚡", "#34d399", suggestions),
     ]:
@@ -607,15 +607,15 @@ def render_category():
         # Row 1 — sales vs category average
         fig.add_trace(go.Scatter(
             x=d["trend_dates"], y=d["our_sales"],
-            name="我方销量(件)",
-            legendgroup="row1", legendgrouptitle_text="销量趋势",
+            name="● 我方销量(件)",
+            legendgroup="row1",
             line=dict(color="#38bdf8", width=2.5),
             fill="tozeroy", fillcolor="rgba(56,189,248,0.10)",
             mode="lines+markers", marker=dict(size=5, color="#38bdf8", symbol="circle"),
         ), row=1, col=1)
         fig.add_trace(go.Scatter(
             x=d["trend_dates"], y=d["cat_avg"],
-            name="类目日均销量(件)",
+            name="- - 类目均值(件)",
             legendgroup="row1",
             line=dict(color="#f472b6", width=2, dash="dash"),
             mode="lines+markers", marker=dict(size=4, color="#f472b6", symbol="diamond"),
@@ -623,14 +623,14 @@ def render_category():
         # Row 2 — category share (left, green) and BSR rank (right, amber dashed, inverted)
         fig.add_trace(go.Scatter(
             x=d["trend_dates"], y=d["share_trend"],
-            name="类目份额(%)",
-            legendgroup="row2", legendgrouptitle_text="份额&排名",
+            name="● 类目份额(%)",
+            legendgroup="row2",
             line=dict(color="#4ade80", width=2.5),
             mode="lines+markers", marker=dict(size=5, color="#4ade80", symbol="circle"),
         ), row=2, col=1, secondary_y=False)
         fig.add_trace(go.Scatter(
             x=d["trend_dates"], y=d["bsr_trend"],
-            name="BSR排名(越小越好)",
+            name="- - BSR排名(越小越好)",
             legendgroup="row2",
             line=dict(color="#fbbf24", width=2, dash="dash"),
             mode="lines+markers", marker=dict(size=4, color="#fbbf24", symbol="diamond"),
@@ -641,8 +641,7 @@ def render_category():
             height=440, margin=dict(l=10, r=80, t=55, b=10),
             legend=dict(font=dict(size=9), bgcolor="rgba(15,23,42,0.7)",
                         bordercolor="#334155", borderwidth=1,
-                        orientation="v", x=1.08, y=1,
-                        grouptitlefont=dict(size=9, color="#64748b")),
+                        orientation="v", x=1.08, y=1,),
             hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
                             font=dict(color="#e2e8f0", size=11)),
         )
@@ -811,10 +810,10 @@ def render_competitors():
             st.markdown(f'<div class="adv-card"><div style="font-size:12px;font-weight:600;color:#34d399;margin-bottom:8px">✓ 我方优势</div>{adv_rows}</div>', unsafe_allow_html=True)
         with c_dis:
             dis_rows = "".join(
-                f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#f87171">-</span>{a}</div>'
+                f'<div style="font-size:11px;color:#cbd5e1;display:flex;gap:5px;margin-bottom:4px"><span style="color:#e2e8f0">-</span>{a}</div>'
                 for a in ["评论量仅1247，竞品均值9270（-87%）","Listing 质量分72，低于所有竞品","品牌知名度弱，无 Brand Story","BSR #247，落后 Tribit(#22)、Anker(#12)"]
             )
-            st.markdown(f'<div class="dis-card"><div style="font-size:12px;font-weight:600;color:#f87171;margin-bottom:8px">✗ 我方劣势</div>{dis_rows}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="dis-card"><div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:8px">✗ 我方劣势</div>{dis_rows}</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="risk-box" style="margin-top:10px"><span style="font-weight:600">⚠ 最大风险：</span>评论量极度不足，在同类搜索页面中信任感最低，严重拖累转化率。</div>', unsafe_allow_html=True)
         st.markdown('<div class="prio-box" style="margin-top:6px"><span style="font-weight:600">→ 优先优化：</span>30天内Review糭还果2000是单一最高ROI动作，优先于任何广告优化。</div>', unsafe_allow_html=True)
@@ -1083,7 +1082,7 @@ def main():
         total = MOCK["scores"]["total"]
         overall = status_of(total)
         if st.session_state.has_data:
-            c_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#f87171"}
+            c_map = {"优秀":"#34d399","较好":"#60a5fa","正常":"#fbbf24","异常":"#e2e8f0"}
             st.markdown(f"""
             <div style="height:100%;display:flex;align-items:center;gap:8px;margin-top:4px">
               <span style="font-size:18px;font-weight:800;color:{c_map[overall]}">{total}/100</span>
