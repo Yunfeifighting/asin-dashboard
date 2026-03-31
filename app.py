@@ -210,7 +210,7 @@ MOCK = {
         "listingQualityScore": 72, "bsr": 247,
         "features": ["IPX7 Waterproof","24H Battery","360° Sound","Dual Pairing","USB-C"],
     },
-    "scores": {"category":15,"brand":10,"competition":20,"keywords":20,"ads":20,"listing":15,"total":100},
+    "scores": {"category":10,"brand":7,"competition":12,"keywords":13,"ads":13,"listing":10,"total":65},
     "scoreMeta": [
         {"key":"category",    "label":"品类表现",     "max":15},
         {"key":"brand",       "label":"品牌表现",     "max":10},
@@ -243,6 +243,15 @@ MOCK = {
         {"date":"6/29","brandIdx":82, "catIdx":104},
         {"date":"6/30","brandIdx":80, "catIdx":107},
     ],
+    "brand_share_trend": {
+        "dates":    ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"],
+        "Anker":    [17.8, 18.0, 18.3, 18.1, 18.4, 18.2, 18.2],
+        "JBL":      [14.2, 14.4, 14.6, 14.5, 14.3, 14.5, 14.5],
+        "Sony":     [9.6,  9.7,  9.9,  9.8,  9.8,  9.9,  9.8],
+        "Bose":     [8.2,  8.1,  8.0,  8.1,  8.2,  8.1,  8.1],
+        "Tribit":   [6.3,  6.4,  6.3,  6.4,  6.5,  6.4,  6.4],
+        "SoundMax": [4.5,  4.3,  4.4,  4.2,  4.1,  4.3,  4.2],
+    },
     "competitors": [
         {"asin":"B0D54LVZK5","brand":"SoundMax","price":45.99,"discount":8, "rating":4.2,"reviews":1247,  "sales":980,  "budget":"$2,847","lscore":72,"bsr":247, "ours":True},
         {"asin":"B08N5WRWNW","brand":"Anker",   "price":35.99,"discount":0, "rating":4.6,"reviews":15420, "sales":2840, "budget":"$8,200","lscore":91,"bsr":12,  "ours":False},
@@ -516,7 +525,7 @@ def render_overview(asin):
           </div>
           <div style="background:rgba(51,65,85,0.4);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:10px;font-size:11px;color:#94a3b8">
             <span style="color:#e2e8f0">综合诊断：</span>该 ASIN 处于
-            <span style="color:#fbbf24;font-weight:600">正常</span>水平，评论量不足是核心瓶颈，关键词自然流量有较大提升空间，广告存在浪费。
+            <span style="color:#fbbf24;font-weight:600">正常</span>水平（65/100），存在35分提升空间。评论量不足（-5分）、Listing质量偏低（-5分）、广告效率待优化（-7分）是主要扣分项，建议优先提升评论与关键词覆盖。
           </div>
         </div>
         """, unsafe_allow_html=True)
@@ -590,65 +599,70 @@ def render_category():
 
         fig = make_subplots(
             rows=2, cols=1,
-            subplot_titles=("7日销量趋势对比", "7日类目份额 & BSR排名走势"),
+            subplot_titles=("① 7日销量趋势对比  |  我方销量(蓝)  vs  类目均值(粉)",
+                            "② 7日份额 & BSR走势  |  类目份额%(绿)  vs  BSR排名(橙,越小越好)"),
             specs=[[{}], [{"secondary_y": True}]],
-            vertical_spacing=0.18,
+            vertical_spacing=0.20,
         )
+        # Row 1 — sales vs category average
         fig.add_trace(go.Scatter(
-            x=d["trend_dates"], y=d["our_sales"], name="我方销量",
-            line=dict(color="#60a5fa", width=2),
-            fill="tozeroy", fillcolor="rgba(96,165,250,0.08)",
-            mode="lines+markers", marker=dict(size=4, color="#60a5fa"),
+            x=d["trend_dates"], y=d["our_sales"],
+            name="我方销量(件)",
+            legendgroup="row1", legendgrouptitle_text="销量趋势",
+            line=dict(color="#38bdf8", width=2.5),
+            fill="tozeroy", fillcolor="rgba(56,189,248,0.10)",
+            mode="lines+markers", marker=dict(size=5, color="#38bdf8", symbol="circle"),
         ), row=1, col=1)
         fig.add_trace(go.Scatter(
-            x=d["trend_dates"], y=d["cat_avg"], name="类目均値",
-            line=dict(color="#a78bfa", width=1.5, dash="dash"),
-            mode="lines",
+            x=d["trend_dates"], y=d["cat_avg"],
+            name="类目日均销量(件)",
+            legendgroup="row1",
+            line=dict(color="#f472b6", width=2, dash="dash"),
+            mode="lines+markers", marker=dict(size=4, color="#f472b6", symbol="diamond"),
         ), row=1, col=1)
+        # Row 2 — category share (left, green) and BSR rank (right, amber dashed, inverted)
         fig.add_trace(go.Scatter(
-            x=d["trend_dates"], y=d["share_trend"], name="类目份额(%)",
-            line=dict(color="#34d399", width=2),
-            mode="lines+markers", marker=dict(size=4, color="#34d399"),
+            x=d["trend_dates"], y=d["share_trend"],
+            name="类目份额(%)",
+            legendgroup="row2", legendgrouptitle_text="份额&排名",
+            line=dict(color="#4ade80", width=2.5),
+            mode="lines+markers", marker=dict(size=5, color="#4ade80", symbol="circle"),
         ), row=2, col=1, secondary_y=False)
         fig.add_trace(go.Scatter(
-            x=d["trend_dates"], y=d["bsr_trend"], name="BSR排名↓越低越好",
-            line=dict(color="#fb923c", width=2, dash="dash"),
-            mode="lines+markers", marker=dict(size=4, color="#fb923c"),
+            x=d["trend_dates"], y=d["bsr_trend"],
+            name="BSR排名(越小越好)",
+            legendgroup="row2",
+            line=dict(color="#fbbf24", width=2, dash="dash"),
+            mode="lines+markers", marker=dict(size=4, color="#fbbf24", symbol="diamond"),
         ), row=2, col=1, secondary_y=True)
         fig.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
             font=dict(color="#94a3b8", size=10),
-            height=400, margin=dict(l=10, r=60, t=40, b=10),
-            legend=dict(font=dict(size=9), bgcolor="rgba(0,0,0,0)",
-                        orientation="h", y=1.08, x=0),
+            height=440, margin=dict(l=10, r=80, t=55, b=10),
+            legend=dict(font=dict(size=9), bgcolor="rgba(15,23,42,0.7)",
+                        bordercolor="#334155", borderwidth=1,
+                        orientation="v", x=1.08, y=1,
+                        grouptitlefont=dict(size=9, color="#64748b")),
             hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
                             font=dict(color="#e2e8f0", size=11)),
         )
-        fig.update_xaxes(gridcolor="#1e293b", linecolor="#334155", tickfont=dict(size=9))
-        fig.update_yaxes(gridcolor="#1e293b", linecolor="#334155",
-                         tickfont=dict(size=9), row=1, col=1)
-        fig.update_yaxes(title_text="销量(件)", title_font=dict(size=9),
-                         tickfont=dict(size=9, color="#94a3b8"),
-                         gridcolor="#1e293b", row=1, col=1)
-        fig.update_yaxes(title_text="份额(%)", title_font=dict(color="#34d399", size=9),
-                         tickfont=dict(size=9, color="#34d399"),
-                         gridcolor="#1e293b",
+        fig.update_xaxes(gridcolor="#1e293b", linecolor="#475569",
+                         tickfont=dict(size=9, color="#94a3b8"))
+        fig.update_yaxes(title_text="销量(件)", title_font=dict(size=9, color="#38bdf8"),
+                         tickfont=dict(size=9, color="#38bdf8"),
+                         gridcolor="#1e293b", linecolor="#475569", row=1, col=1)
+        fig.update_yaxes(title_text="份额(%)", title_font=dict(color="#4ade80", size=9),
+                         tickfont=dict(size=9, color="#4ade80"),
+                         gridcolor="#1e293b", linecolor="#475569",
                          secondary_y=False, row=2, col=1)
-        fig.update_yaxes(title_text="BSR排名", title_font=dict(color="#fb923c", size=9),
-                         tickfont=dict(size=9, color="#fb923c"),
-                         gridcolor="rgba(0,0,0,0)", autorange="reversed",
+        fig.update_yaxes(title_text="BSR排名", title_font=dict(color="#fbbf24", size=9),
+                         tickfont=dict(size=9, color="#fbbf24"),
+                         gridcolor="rgba(0,0,0,0)", linecolor="#475569",
+                         autorange="reversed",
                          secondary_y=True, row=2, col=1)
-        fig.update_annotations(font=dict(color="#94a3b8", size=10))
+        fig.update_annotations(font=dict(color="#cbd5e1", size=10))
         st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
 
-        brands = d["top_brands"]
-        fig2 = go.Figure(go.Bar(
-            x=[b["share"] for b in brands], y=[b["brand"] for b in brands],
-            orientation="h",
-            marker=dict(color=["#34d399" if b["brand"]=="SoundMax" else "#3b82f6" for b in brands]),
-        ))
-        fig2.update_layout(dark_layout(title="类目品牌份额分布 (%)", height=200, xaxis_title="市场份额 (%)"))
-        st.plotly_chart(fig2, use_container_width=True, config=plotly_cfg())
 
         st.markdown(judgment("销量趋势7日连续下滑，当前份额1.5%低于类目均值；类目整体保持增长，品类需求健康。"), unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
@@ -685,19 +699,62 @@ def render_brand():
                   <div class="diag-sub">{sub}</div>
                 </div>""", unsafe_allow_html=True)
 
-        bt = d["brand_trend"]
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=[r["date"] for r in bt], y=[r["brandIdx"] for r in bt], name="品牌指数",
-            line=dict(color="#60a5fa", width=2), mode="lines+markers",
-            marker=dict(size=4, color="#60a5fa")))
-        fig.add_trace(go.Scatter(
-            x=[r["date"] for r in bt], y=[r["catIdx"] for r in bt], name="类目指数",
-            line=dict(color="#a78bfa", width=1.5, dash="dash"), mode="lines"))
-        fig.add_hline(y=100, line=dict(color="#334155", dash="dot"), annotation_text="基准线")
-        fig.update_layout(dark_layout(title="品牌 vs 类目趋势指数（基准=100）", height=200, yaxis_range=[78,115]))
-        st.plotly_chart(fig, use_container_width=True, config=plotly_cfg())
+        # Pie chart — brand share distribution
+        brands = d["top_brands"]
+        others_share = round(100 - sum(b["share"] for b in brands), 1)
+        pie_labels = [b["brand"] for b in brands] + ["其他"]
+        pie_values = [b["share"] for b in brands] + [others_share]
+        pie_colors = ["#38bdf8","#f472b6","#4ade80","#fbbf24","#a78bfa","#fb923c","#64748b"]
+        fig_pie = go.Figure(go.Pie(
+            labels=pie_labels, values=pie_values,
+            marker=dict(colors=pie_colors, line=dict(color="#0f172a", width=1.5)),
+            textinfo="label+percent",
+            textfont=dict(size=10, color="white"),
+            pull=[0.06 if b["brand"]=="SoundMax" else 0 for b in brands] + [0],
+            hovertemplate="<b>%{label}</b><br>份额: %{value}%<extra></extra>",
+        ))
+        fig_pie.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#94a3b8", size=10),
+            title=dict(text="类目品牌份额分布", font=dict(color="#cbd5e1", size=12), x=0.5),
+            height=280, margin=dict(l=10, r=10, t=40, b=10),
+            showlegend=False,
+        )
+        st.plotly_chart(fig_pie, use_container_width=True, config=plotly_cfg())
 
+        # 6-brand share trend lines
+        bst = d["brand_share_trend"]
+        dates = bst["dates"]
+        brand_colors_map = {
+            "Anker":"#38bdf8", "JBL":"#f472b6", "Sony":"#4ade80",
+            "Bose":"#fbbf24", "Tribit":"#a78bfa", "SoundMax":"#fb923c",
+        }
+        fig_bst = go.Figure()
+        for brand, color in brand_colors_map.items():
+            lw = 2.5 if brand == "SoundMax" else 1.5
+            dash = "solid" if brand == "SoundMax" else "dot"
+            fig_bst.add_trace(go.Scatter(
+                x=dates, y=bst[brand], name=brand,
+                line=dict(color=color, width=lw, dash=dash),
+                mode="lines+markers",
+                marker=dict(size=5 if brand=="SoundMax" else 3, color=color),
+            ))
+        fig_bst.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
+            font=dict(color="#94a3b8", size=10),
+            title=dict(text="6大品牌市场份额趋势(%) — 7日走势  (橙色=SoundMax)", font=dict(color="#cbd5e1", size=12), x=0),
+            height=260, margin=dict(l=10, r=10, t=45, b=10),
+            legend=dict(font=dict(size=9), bgcolor="rgba(15,23,42,0.7)",
+                        bordercolor="#334155", borderwidth=1,
+                        orientation="h", x=0, y=1.22),
+            yaxis=dict(title="份额(%)", titlefont=dict(size=9, color="#94a3b8"),
+                       tickfont=dict(size=9, color="#94a3b8"),
+                       gridcolor="#1e293b", linecolor="#475569"),
+            xaxis=dict(gridcolor="#1e293b", linecolor="#475569", tickfont=dict(size=9, color="#94a3b8")),
+            hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
+                            font=dict(color="#e2e8f0", size=11)),
+        )
+        st.plotly_chart(fig_bst, use_container_width=True, config=plotly_cfg())
         st.markdown(judgment("品牌整体在下滑（-3.2% WoW），而类目同期增长1.4%；本 ASIN 贡献品牌42%销量，品牌势能偏弱。"), unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
         st.markdown(action_list([
