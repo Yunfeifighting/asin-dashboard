@@ -738,21 +738,15 @@ def render_brand():
                 mode="lines+markers",
                 marker=dict(size=5 if brand=="SoundMax" else 3, color=color),
             ))
-        fig_bst.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
-            font=dict(color="#94a3b8", size=10),
-            title=dict(text="6大品牌市场份额趋势(%) — 7日走势  (橙色=SoundMax)", font=dict(color="#cbd5e1", size=12), x=0),
-            height=260, margin=dict(l=10, r=10, t=45, b=10),
+        fig_bst.update_layout(dark_layout(
+            title="6大品牌市场份额趋势 — 7日走势 (橙色=SoundMax)",
+            height=260,
+            margin=dict(l=10, r=10, t=45, b=10),
             legend=dict(font=dict(size=9), bgcolor="rgba(15,23,42,0.7)",
                         bordercolor="#334155", borderwidth=1,
                         orientation="h", x=0, y=1.22),
-            yaxis=dict(title="份额(%)", titlefont=dict(size=9, color="#94a3b8"),
-                       tickfont=dict(size=9, color="#94a3b8"),
-                       gridcolor="#1e293b", linecolor="#475569"),
-            xaxis=dict(gridcolor="#1e293b", linecolor="#475569", tickfont=dict(size=9, color="#94a3b8")),
-            hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
-                            font=dict(color="#e2e8f0", size=11)),
-        )
+            yaxis_title="份额(%)",
+        ))
         st.plotly_chart(fig_bst, use_container_width=True, config=plotly_cfg())
         st.markdown(judgment("品牌整体在下滑（-3.2% WoW），而类目同期增长1.4%；本 ASIN 贡献品牌42%销量，品牌势能偏弱。"), unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
