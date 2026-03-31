@@ -836,13 +836,19 @@ def render_competitors():
         ))
     fig_ct.update_layout(dark_layout(
         title="竞品单品销量趋势对比 — 7日走势 (实线=本品)",
-        height=280,
+        height=300,
         margin=dict(l=10, r=10, t=45, b=10),
+        hovermode="x unified",
         legend=dict(font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.8)",
                     bordercolor="#334155", borderwidth=1,
                     orientation="v", x=1.01, y=1, xanchor="left"),
         yaxis_title="日销量(件)",
     ))
+    fig_ct.update_xaxes(
+        showspikes=True, spikemode="across", spikesnap="cursor",
+        spikecolor="#94a3b8", spikethickness=1, spikedash="dot",
+    )
+    fig_ct.update_yaxes(showspikes=False)
     st.plotly_chart(fig_ct, use_container_width=True, config=plotly_cfg())
 
     st.markdown(action_list([
@@ -908,6 +914,72 @@ def render_keywords():
 # MODULE 5 — ADS
 # ─────────────────────────────────────────────────────────────
 
+    # ── Chart 1: Top关键词搜索量趋势 ──
+    import random as _r2; _r2.seed(7)
+    kw_dates = ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"]
+    kw_colors = ["#38bdf8","#f472b6","#4ade80","#fbbf24","#a78bfa"]
+    fig_kvol = go.Figure()
+    for i, kw in enumerate(kws[:5]):
+        base = kw["vol"]
+        trend_vals = [max(1000, int(base * (1 + (j-3)*0.015 + (_r2.random()-0.5)*0.06))) for j in range(7)]
+        fig_kvol.add_trace(go.Scatter(
+            x=kw_dates, y=trend_vals, name=kw["kw"][:20],
+            mode="lines+markers",
+            line=dict(color=kw_colors[i % len(kw_colors)], width=2),
+            marker=dict(size=5, color=kw_colors[i % len(kw_colors)]),
+            hovertemplate="%{y:,}<extra>" + kw["kw"][:15] + "</extra>",
+        ))
+    fig_kvol.update_layout(dark_layout(
+        title="Top关键词搜索量趋势 — 7日走势",
+        height=280, margin=dict(l=10, r=10, t=45, b=10),
+        hovermode="x unified",
+        legend=dict(font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.8)",
+                    bordercolor="#334155", borderwidth=1,
+                    orientation="v", x=1.01, y=1, xanchor="left"),
+        yaxis_title="月搜索量",
+    ))
+    fig_kvol.update_xaxes(showspikes=True, spikemode="across", spikesnap="cursor",
+                          spikecolor="#94a3b8", spikethickness=1, spikedash="dot")
+    st.plotly_chart(fig_kvol, use_container_width=True, config=plotly_cfg())
+
+    # ── Chart 2: 我方 vs 竞对 关键词排名趋势 ──
+    _r2.seed(13)
+    fig_krank = go.Figure()
+    top_kws = kws[:3]
+    rank_colors_our = ["#38bdf8","#4ade80","#fbbf24"]
+    rank_colors_comp = ["#f472b6","#a78bfa","#fb923c"]
+    for i, kw in enumerate(top_kws):
+        base_org = kw["org"]
+        our_ranks = [max(1, int(base_org + (j-3)*(-0.3) + (_r2.random()-0.5)*1.5)) for j in range(7)]
+        comp_base = base_org + _r2.randint(5,15)
+        comp_ranks = [max(1, int(comp_base + (j-3)*0.2 + (_r2.random()-0.5)*2)) for j in range(7)]
+        label = kw["kw"][:12]
+        fig_krank.add_trace(go.Scatter(
+            x=kw_dates, y=our_ranks, name=f"我方·{label}",
+            mode="lines+markers",
+            line=dict(color=rank_colors_our[i], width=2, dash="solid"),
+            marker=dict(size=6, color=rank_colors_our[i]),
+        ))
+        fig_krank.add_trace(go.Scatter(
+            x=kw_dates, y=comp_ranks, name=f"竞对·{label}",
+            mode="lines+markers",
+            line=dict(color=rank_colors_comp[i], width=1.5, dash="dot"),
+            marker=dict(size=4, color=rank_colors_comp[i]),
+        ))
+    fig_krank.update_layout(dark_layout(
+        title="关键词排名趋势 — 我方(实) vs 竞对(虚)，排名越小越好",
+        height=300, margin=dict(l=10, r=10, t=45, b=10),
+        hovermode="x unified",
+        legend=dict(font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.8)",
+                    bordercolor="#334155", borderwidth=1,
+                    orientation="v", x=1.01, y=1, xanchor="left"),
+        yaxis=dict(autorange="reversed", title="自然排名(位)"),
+    ))
+    fig_krank.update_xaxes(showspikes=True, spikemode="across", spikesnap="cursor",
+                           spikecolor="#94a3b8", spikethickness=1, spikedash="dot")
+    st.plotly_chart(fig_krank, use_container_width=True, config=plotly_cfg())
+
+
 def render_ads():
     sc = MOCK["scores"]["ads"]
     s = MOCK["ads_summary"]
@@ -933,49 +1005,96 @@ def render_ads():
                   <div style="font-size:15px;font-weight:700;color:{clr}">{val}</div>
                 </div>""", unsafe_allow_html=True)
 
-        tab_camp, tab_kw = st.tabs(["📋 广告活动", "🔑 关键词明细"])
 
-        with tab_camp:
-            rows = "".join(f"""
-            <tr>
-              <td style="color:white;font-weight:500">{c['name']}</td>
-              <td style="color:white">${c['spend']}</td>
-              <td>{c['impr']//1000}K</td><td>{c['clicks']}</td>
-              <td>{c['ctr']}%</td><td>{c['cvr']}%</td>
-              <td class="{'red-val' if c['acos']>35 else ('amber-val' if c['acos']>28 else 'green-val')}">{c['acos']}%</td>
-              <td>{c['roas']}x</td>
-              <td>{badge_html('good' if c['health']=='good' else 'warn')}</td>
-            </tr>""" for c in camps)
-            st.markdown(f"""
-            <div class="tbl-wrapper">
-            <table class="dtbl">
-              <thead><tr><th>广告活动</th><th>花费</th><th>曝光</th><th>点击</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>状态</th></tr></thead>
-              <tbody>{rows}</tbody>
-            </table></div>""", unsafe_allow_html=True)
+    # ── 广告日维度趋势图 ──
+    import random as _r3; _r3.seed(99)
+    ad_dates = ["6/24","6/25","6/26","6/27","6/28","6/29","6/30"]
+    base_spend = s["spend"] / 7
+    ad_daily = {
+        "spend": [round(base_spend * (1 + (j-3)*0.04 + (_r3.random()-0.5)*0.12), 0) for j in range(7)],
+        "ctr":   [round(s["ctr"]  * (1 + (_r3.random()-0.5)*0.15), 2) for _ in range(7)],
+        "cvr":   [round(s["cvr"]  * (1 + (_r3.random()-0.5)*0.12), 2) for _ in range(7)],
+        "cpc":   [round(s["cpc"]  * (1 + (_r3.random()-0.5)*0.10), 2) for _ in range(7)],
+        "acos":  [round(s["acos"] * (1 + (_r3.random()-0.5)*0.18), 1) for _ in range(7)],
+        "cpo":   [round(s["spend"] / max(s["conv"], 1) * (1 + (_r3.random()-0.5)*0.15), 1) for _ in range(7)],
+    }
+    from plotly.subplots import make_subplots as _msp
+    fig_adtrend = _msp(rows=2, cols=3, subplot_titles=[
+        "日花费($)", "CTR(%)", "CVR(%)", "单订单广告成本($)", "CPC($)", "ACOS(%)"
+    ])
+    _metric_cfg = [
+        ("spend", 1, 1, "#38bdf8"), ("ctr", 1, 2, "#4ade80"), ("cvr", 1, 3, "#fbbf24"),
+        ("cpo",   2, 1, "#f472b6"), ("cpc", 2, 2, "#a78bfa"), ("acos",2, 3, "#fb923c"),
+    ]
+    for key, row, col, clr in _metric_cfg:
+        fig_adtrend.add_trace(go.Scatter(
+            x=ad_dates, y=ad_daily[key], name=key.upper(),
+            mode="lines+markers",
+            line=dict(color=clr, width=2),
+            marker=dict(size=5, color=clr),
+            showlegend=False,
+            hovertemplate="%{y}<extra>" + key.upper() + "</extra>",
+        ), row=row, col=col)
+    fig_adtrend.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
+        font=dict(color="#e2e8f0", size=10),
+        height=380, margin=dict(l=10, r=10, t=55, b=10),
+        hovermode="x unified",
+        hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155", font=dict(color="#e2e8f0", size=11)),
+        title=dict(text="广告核心指标日趋势 — 7日走势", font=dict(color="#e2e8f0", size=13), x=0.02),
+    )
+    fig_adtrend.update_xaxes(
+        gridcolor="#1e293b", linecolor="#334155", tickfont=dict(size=9, color="#e2e8f0"),
+        showspikes=True, spikemode="across", spikesnap="cursor",
+        spikecolor="#94a3b8", spikethickness=1, spikedash="dot",
+    )
+    fig_adtrend.update_yaxes(gridcolor="#1e293b", linecolor="#334155", tickfont=dict(size=9, color="#e2e8f0"))
+    for ann in fig_adtrend.layout.annotations:
+        ann.font.color = "#e2e8f0"
+        ann.font.size  = 11
+    st.plotly_chart(fig_adtrend, use_container_width=True, config=plotly_cfg())
 
-        with tab_kw:
-            rows = "".join(f"""
-            <tr style="{'background:rgba(239,68,68,0.04)' if k['status']=='abn' else ''}">
-              <td style="color:white;font-weight:500">{k['kw']}</td>
-              <td>${k['spend']}</td><td>{k['clicks']}</td>
-              <td>{k['ctr']}%</td><td>${k['cpc']}</td>
-              <td>{k['conv']}</td><td>{k['cvr']}%</td>
-              <td class="{'red-val' if k['acos']>45 else ('amber-val' if k['acos']>30 else 'green-val')}">{k['acos']}%</td>
-              <td>{badge_html(k['status'])}</td>
-            </tr>""" for k in ad_kws)
-            st.markdown(f"""
-            <div class="tbl-wrapper">
-            <table class="dtbl">
-              <thead><tr><th>关键词</th><th>花费</th><th>点击</th><th>CTR</th><th>CPC</th><th>转化</th><th>CVR</th><th>ACOS</th><th>状态</th></tr></thead>
-              <tbody>{rows}</tbody>
-            </table></div>""", unsafe_allow_html=True)
+        rows = "".join(f"""
+        <tr>
+          <td style="color:white;font-weight:500">{c['name']}</td>
+          <td style="color:white">${c['spend']}</td>
+          <td>{c['impr']//1000}K</td><td>{c['clicks']}</td>
+          <td>{c['ctr']}%</td><td>{c['cvr']}%</td>
+          <td class="{'red-val' if c['acos']>35 else ('amber-val' if c['acos']>28 else 'green-val')}">{c['acos']}%</td>
+          <td>{c['roas']}x</td>
+          <td>{badge_html('good' if c['health']=='good' else 'warn')}</td>
+        </tr>""" for c in camps)
+        st.markdown(f"""
+        <div class="tbl-wrapper">
+        <table class="dtbl">
+          <thead><tr><th>广告活动</th><th>花费</th><th>曝光</th><th>点击</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>状态</th></tr></thead>
+          <tbody>{rows}</tbody>
+        </table></div>""", unsafe_allow_html=True)
+
+
+        st.markdown('<p style="color:#94a3b8;font-size:13px;font-weight:700;letter-spacing:.05em;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #334155">🔑 关键词明细</p>', unsafe_allow_html=True)
+        rows = "".join(f"""
+        <tr style="{'background:rgba(239,68,68,0.04)' if k['status']=='abn' else ''}">
+          <td style="color:white;font-weight:500">{k['kw']}</td>
+          <td>${k['spend']}</td><td>{k['clicks']}</td>
+          <td>{k['ctr']}%</td><td>${k['cpc']}</td>
+          <td>{k['conv']}</td><td>{k['cvr']}%</td>
+          <td class="{'red-val' if k['acos']>45 else ('amber-val' if k['acos']>30 else 'green-val')}">{k['acos']}%</td>
+          <td>{badge_html(k['status'])}</td>
+        </tr>""" for k in ad_kws)
+        st.markdown(f"""
+        <div class="tbl-wrapper">
+        <table class="dtbl">
+          <thead><tr><th>关键词</th><th>花费</th><th>点击</th><th>CTR</th><th>CPC</th><th>转化</th><th>CVR</th><th>ACOS</th><th>状态</th></tr></thead>
+          <tbody>{rows}</tbody>
+        </table></div>""", unsafe_allow_html=True)
 
         st.markdown(judgment("整体 ACOS 28.5% 尚可，但'waterproof speaker'和'ipx7 speaker'两词 ACOS 超50%，拖累整体效率。"), unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
         st.markdown(action_list([
-            "立即暂停/否词 'waterproof speaker'（ACOS 54.9%）和 'ipx7 speaker'（50.3%）",
-            "提高 'small bluetooth speaker' 和 'outdoor speaker' 预算（ACOS 20-22%，机会词）",
-            "开启 Sponsored Brands 视频广告，提升 CTR",
+        "立即暂停/否词 'waterproof speaker'（ACOS 54.9%）和 'ipx7 speaker'（50.3%）",
+        "提高 'small bluetooth speaker' 和 'outdoor speaker' 预算（ACOS 20-22%，机会词）",
+        "开启 Sponsored Brands 视频广告，提升 CTR",
         ]), unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────
