@@ -1054,48 +1054,48 @@ def render_ads():
         ann.font.size  = 11
     st.plotly_chart(fig_adtrend, use_container_width=True, config=plotly_cfg())
 
-        rows = "".join(f"""
-        <tr>
-          <td style="color:white;font-weight:500">{c['name']}</td>
-          <td style="color:white">${c['spend']}</td>
-          <td>{c['impr']//1000}K</td><td>{c['clicks']}</td>
-          <td>{c['ctr']}%</td><td>{c['cvr']}%</td>
-          <td class="{'red-val' if c['acos']>35 else ('amber-val' if c['acos']>28 else 'green-val')}">{c['acos']}%</td>
-          <td>{c['roas']}x</td>
-          <td>{badge_html('good' if c['health']=='good' else 'warn')}</td>
-        </tr>""" for c in camps)
-        st.markdown(f"""
-        <div class="tbl-wrapper">
-        <table class="dtbl">
-          <thead><tr><th>广告活动</th><th>花费</th><th>曝光</th><th>点击</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>状态</th></tr></thead>
-          <tbody>{rows}</tbody>
-        </table></div>""", unsafe_allow_html=True)
+    rows = "".join(f"""
+    <tr>
+      <td style="color:white;font-weight:500">{c['name']}</td>
+      <td style="color:white">${c['spend']}</td>
+      <td>{c['impr']//1000}K</td><td>{c['clicks']}</td>
+      <td>{c['ctr']}%</td><td>{c['cvr']}%</td>
+      <td class="{'red-val' if c['acos']>35 else ('amber-val' if c['acos']>28 else 'green-val')}">{c['acos']}%</td>
+      <td>{c['roas']}x</td>
+      <td>{badge_html('good' if c['health']=='good' else 'warn')}</td>
+    </tr>""" for c in camps)
+    st.markdown(f"""
+    <div class="tbl-wrapper">
+    <table class="dtbl">
+      <thead><tr><th>广告活动</th><th>花费</th><th>曝光</th><th>点击</th><th>CTR</th><th>CVR</th><th>ACOS</th><th>ROAS</th><th>状态</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></div>""", unsafe_allow_html=True)
 
 
-        st.markdown('<p style="color:#94a3b8;font-size:13px;font-weight:700;letter-spacing:.05em;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #334155">🔑 关键词明细</p>', unsafe_allow_html=True)
-        rows = "".join(f"""
-        <tr style="{'background:rgba(239,68,68,0.04)' if k['status']=='abn' else ''}">
-          <td style="color:white;font-weight:500">{k['kw']}</td>
-          <td>${k['spend']}</td><td>{k['clicks']}</td>
-          <td>{k['ctr']}%</td><td>${k['cpc']}</td>
-          <td>{k['conv']}</td><td>{k['cvr']}%</td>
-          <td class="{'red-val' if k['acos']>45 else ('amber-val' if k['acos']>30 else 'green-val')}">{k['acos']}%</td>
-          <td>{badge_html(k['status'])}</td>
-        </tr>""" for k in ad_kws)
-        st.markdown(f"""
-        <div class="tbl-wrapper">
-        <table class="dtbl">
-          <thead><tr><th>关键词</th><th>花费</th><th>点击</th><th>CTR</th><th>CPC</th><th>转化</th><th>CVR</th><th>ACOS</th><th>状态</th></tr></thead>
-          <tbody>{rows}</tbody>
-        </table></div>""", unsafe_allow_html=True)
+    st.markdown('<p style="color:#94a3b8;font-size:13px;font-weight:700;letter-spacing:.05em;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #334155">🔑 关键词明细</p>', unsafe_allow_html=True)
+    rows = "".join(f"""
+    <tr style="{'background:rgba(239,68,68,0.04)' if k['status']=='abn' else ''}">
+      <td style="color:white;font-weight:500">{k['kw']}</td>
+      <td>${k['spend']}</td><td>{k['clicks']}</td>
+      <td>{k['ctr']}%</td><td>${k['cpc']}</td>
+      <td>{k['conv']}</td><td>{k['cvr']}%</td>
+      <td class="{'red-val' if k['acos']>45 else ('amber-val' if k['acos']>30 else 'green-val')}">{k['acos']}%</td>
+      <td>{badge_html(k['status'])}</td>
+    </tr>""" for k in ad_kws)
+    st.markdown(f"""
+    <div class="tbl-wrapper">
+    <table class="dtbl">
+      <thead><tr><th>关键词</th><th>花费</th><th>点击</th><th>CTR</th><th>CPC</th><th>转化</th><th>CVR</th><th>ACOS</th><th>状态</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></div>""", unsafe_allow_html=True)
 
-        st.markdown(judgment("整体 ACOS 28.5% 尚可，但'waterproof speaker'和'ipx7 speaker'两词 ACOS 超50%，拖累整体效率。"), unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
-        st.markdown(action_list([
-        "立即暂停/否词 'waterproof speaker'（ACOS 54.9%）和 'ipx7 speaker'（50.3%）",
-        "提高 'small bluetooth speaker' 和 'outdoor speaker' 预算（ACOS 20-22%，机会词）",
-        "开启 Sponsored Brands 视频广告，提升 CTR",
-        ]), unsafe_allow_html=True)
+    st.markdown(judgment("整体 ACOS 28.5% 尚可，但'waterproof speaker'和'ipx7 speaker'两词 ACOS 超50%，拖累整体效率。"), unsafe_allow_html=True)
+    st.markdown('<div style="font-size:12px;font-weight:600;color:#94a3b8;margin-top:10px;margin-bottom:4px">建议动作</div>', unsafe_allow_html=True)
+    st.markdown(action_list([
+    "立即暂停/否词 'waterproof speaker'（ACOS 54.9%）和 'ipx7 speaker'（50.3%）",
+    "提高 'small bluetooth speaker' 和 'outdoor speaker' 预算（ACOS 20-22%，机会词）",
+    "开启 Sponsored Brands 视频广告，提升 CTR",
+    ]), unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────
 # MODULE 6 — 30-DAY ACTION PLAN
