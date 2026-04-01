@@ -394,6 +394,7 @@ def render_sidebar():
         ("🎯", "竞品分析",   "sec-competitor", scores["competition"], 20),
         ("🔍", "关键词分析", "sec-keywords",   scores["keywords"],    20),
         ("💰", "广告分析",   "sec-ads",        scores["ads"],         20),
+        ("📦", "库存分析",   "sec-inventory", None,                  None),
         ("⚙️", "预警配置",   "sec-alert-config", None,                  None),
         ("🚨", "今日预警",   "sec-alert-report", None,                  None),
         ("📋", "未来3天运营方案",   "sec-future",       None,                  None),
@@ -1117,6 +1118,172 @@ def render_ads():
     ]), unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────
+# MODULE 5b — INVENTORY REPLENISHMENT ANALYSIS
+# ─────────────────────────────────────────────────────────────
+
+def render_inventory():
+    st.markdown('<div id="sec-inventory" class="sec-anchor"></div>', unsafe_allow_html=True)
+
+    # ── Mock Data ──
+    inv = {
+        "fba_stock": 2847, "inbound": 1200, "inbound_eta": 18,
+        "vel_7d": 146,     "vel_30d": 132,
+        "lead_time": 45,   "safety_days": 15,
+    }
+    sku_rows = [
+        dict(sku="B0D54LVZK5-BK", name="黑色标准款", stock=1842, vel=98,  inbound=800, rec=3200),
+        dict(sku="B0D54LVZK5-WH", name="白色款",             stock=652,  vel=31,  inbound=300, rec=800),
+        dict(sku="B0D54LVZK5-BL", name="蓝色款",             stock=353,  vel=17,  inbound=100, rec=400),
+    ]
+
+    # ── Calculations ──
+    days_cur   = round(inv["fba_stock"] / inv["vel_7d"], 1)
+    days_all   = round((inv["fba_stock"] + inv["inbound"]) / inv["vel_7d"], 1)
+    rp_days    = inv["lead_time"] + inv["safety_days"]
+    rec_qty    = max(0, rp_days * inv["vel_7d"] - inv["fba_stock"] - inv["inbound"])
+    rec_qty    = ((rec_qty + 99) // 100) * 100
+
+    if days_cur < 20:
+        tag, t_clr = "🔴 紧急补货", "#ef4444"
+    elif days_all < 40:
+        tag, t_clr = "🟡 关注库存", "#f59e0b"
+    else:
+        tag, t_clr = "🟢 库存健康", "#34d399"
+
+    # ── Header ──
+    st.markdown(f"""
+    <div class="mod-header" style="border-left-color:#06b6d4">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">📦</span>
+        <span class="mod-title">库存补货分析</span>
+        <span style="font-size:11px;padding:2px 10px;border-radius:10px;background:{t_clr}22;color:{t_clr};font-weight:700;border:1px solid {t_clr}55">{tag}</span>
+      </div>
+      <span class="mod-score">在库仅剩 <b style="color:{t_clr}">{days_cur}</b> 天 &nbsp;| 含在途 <b style="color:#f59e0b">{days_all}</b> 天</span>
+    </div>""", unsafe_allow_html=True)
+
+    # ── Metric Cards ──
+    c1, c2, c3, c4, c5 = st.columns(5)
+    for col, lbl, val, unit, clr in [
+        (c1, "🏢 FBA在库",       f"{inv['fba_stock']:,}", "件",           "#60a5fa"),
+        (c2, "🚢 在途货量",     f"{inv['inbound']:,}",  f"件 · ETA {inv['inbound_eta']}天", "#a78bfa"),
+        (c3, "📈 7日日均销量",    str(inv["vel_7d"]),     "件/天",        "#34d399"),
+        (c4, "⏱ 可售天数(含在途)", str(days_all),      "天",           "#f59e0b"),
+        (c5, "🛒 建议补货量",    f"{rec_qty:,}",     "件",           "#ef4444"),
+    ]:
+        with col:
+            st.markdown(f"""
+            <div style="background:rgba(30,41,59,0.6);border:1px solid {clr}40;border-radius:10px;padding:12px 14px;text-align:center">
+              <div style="font-size:10px;color:#64748b;margin-bottom:4px">{lbl}</div>
+              <div style="font-size:22px;font-weight:800;color:{clr}">{val}</div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:2px">{unit}</div>
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
+
+    # ── Timeline + Calc Panel ──
+    col_l, col_r = st.columns([3, 2])
+
+    with col_l:
+        max_s  = inv["fba_stock"] + inv["inbound"]
+        bars   = ""
+        for d in range(0, 61, 2):
+            ib = inv["inbound"] if d >= inv["inbound_eta"] else 0
+            lvl = max(0, inv["fba_stock"] + ib - d * inv["vel_7d"])
+            pct = lvl / max_s * 100
+            clr = "#ef444466" if lvl == 0 else ("#60a5fa" if d >= inv["inbound_eta"] else "#f59e0b")
+            h   = max(3, round(pct * 0.7))
+            bars += (f'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">'
+                     f'<div style="width:100%;height:{h}px;background:{clr};border-radius:2px 2px 0 0"></div>'
+                     f'<div style="font-size:7px;color:#475569">{d}</div></div>')
+        st.markdown(f"""
+        <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(71,85,105,0.35);border-radius:12px;padding:14px 16px">
+          <div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:8px">📊 库存水位趋势（未来 60 天）</div>
+          <div style="display:flex;align-items:flex-end;gap:1px;height:52px">{bars}</div>
+          <div style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap">
+            <span style="font-size:10px"><span style="color:#f59e0b">■</span> <span style="color:#64748b">在途到达前</span></span>
+            <span style="font-size:10px"><span style="color:#60a5fa">■</span> <span style="color:#64748b">在途到达后</span></span>
+            <span style="font-size:10px"><span style="color:#ef4444">■</span> <span style="color:#64748b">断货</span></span>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(71,85,105,0.25);display:flex;gap:14px;flex-wrap:wrap">
+            <span style="font-size:10px;color:#a78bfa">🚢 Day {inv['inbound_eta']}：在途 {inv['inbound']:,} 件到货</span>
+            <span style="font-size:10px;color:#ef4444">⚠️ Day {round(days_cur)}：仅在库刻山</span>
+            <span style="font-size:10px;color:#f59e0b">⏰ 建议今日下单补货</span>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    with col_r:
+        urg = "🔴 立即下单" if days_cur < inv["lead_time"] else "🟡 近期下单"
+        rows_calc = "".join([
+            f'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(71,85,105,0.2)">'
+            f'<span style="font-size:11px;color:#94a3b8">{lbl}</span>'
+            f'<span style="font-size:12px;font-weight:700;color:{clr}">{val}</span></div>'
+            for lbl, val, clr in [
+                ("FBA在库", f"{inv['fba_stock']:,} 件", "#60a5fa"),
+                ("在途库存", f"{inv['inbound']:,} 件", "#a78bfa"),
+                ("日均销量(7日)", f"{inv['vel_7d']} 件/天", "#34d399"),
+                ("采购周期(含运输)", f"{inv['lead_time']} 天", "#f59e0b"),
+                ("安全库存天数", f"{inv['safety_days']} 天", "#94a3b8"),
+            ]
+        ])
+        st.markdown(f"""
+        <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(71,85,105,0.35);border-radius:12px;padding:14px 16px">
+          <div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:10px">🧢 补货计算明细</div>
+          {rows_calc}
+          <div style="display:flex;justify-content:space-between;padding:8px 10px;background:rgba(239,68,68,0.12);border-radius:8px;margin-top:8px">
+            <span style="font-size:11px;color:#fca5a5;font-weight:600">📦 建议补货</span>
+            <span style="font-size:14px;font-weight:800;color:#ef4444">{rec_qty:,} 件</span>
+          </div>
+          <div style="text-align:center;margin-top:8px">
+            <span style="font-size:11px;padding:4px 14px;border-radius:6px;background:rgba(239,68,68,0.15);color:#ef4444;font-weight:700">{urg}</span>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
+
+    # ── SKU Table ──
+    trows = ""
+    for s in sku_rows:
+        d = round((s["stock"] + s["inbound"]) / s["vel"], 1)
+        is_slow = s["vel"] < 10
+        if is_slow:
+            st_lbl, st_clr = "滞销建议清仓", "#94a3b8"
+        elif (s["stock"] / s["vel"]) < 20:
+            st_lbl, st_clr = "紧急补货", "#ef4444"
+        else:
+            st_lbl, st_clr = "关注库存", "#f59e0b"
+        rec_show = "建议清仓" if is_slow else f"{s['rec']:,} 件"
+        trows += (f"<tr><td style='color:#94a3b8;font-family:monospace'>{s['sku']}</td>"
+                  f"<td>{s['name']}</td>"
+                  f"<td style='color:#60a5fa;font-weight:700'>{s['stock']:,}</td>"
+                  f"<td style='color:#a78bfa'>{s['inbound']:,}</td>"
+                  f"<td style='color:#34d399'>{s['vel']}</td>"
+                  f"<td style='color:{st_clr};font-weight:700'>{d}</td>"
+                  f"<td><span style='background:{st_clr}22;color:{st_clr};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600'>{st_lbl}</span></td>"
+                  f"<td style='color:#ef4444;font-weight:700'>{rec_show}</td></tr>")
+    st.markdown(f"""
+    <div class="tbl-wrapper"><table class="dtbl">
+      <thead><tr><th>SKU</th><th>品名</th><th>在库(件)</th><th>在途(件)</th>
+        <th>日均销(件)</th><th>可售天数</th><th>状态</th><th>建议</th></tr></thead>
+      <tbody>{trows}</tbody>
+    </table></div>""", unsafe_allow_html=True)
+
+    st.markdown(judgment(
+        f"当前FBA库存{inv['fba_stock']:,}件，7日日均销{inv['vel_7d']}件/天，"
+        f"仅剩约{days_cur}天库存。在途{inv['inbound']:,}件预计{inv['inbound_eta']}天到货，"
+        f"补充后可售{days_all}天，但仍低于采购周期"
+        f"({inv['lead_time']}天)+安全库存({inv['safety_days']}天)={rp_days}天的最低要求，"
+        f"存在断货风险，建议立即安排补货{rec_qty:,}件。"
+    ), unsafe_allow_html=True)
+
+    st.markdown(action_list([
+        f"立即下单补货 <b>{rec_qty:,}件</b>（采购周期45天，越早越安全）",
+        "黑色款优先补货 3,200 件，占总销量 67%，断货损失最大",
+        "与供应商商谈加急生产，争取将发货周期压缩至30天内",
+        "开启FBA库存预警（低于 1,500 件时自动提醒），避免手动平安监控",
+        "旺季需求预期上涨，建议现有基础上额外备货 20% 缓冲量",
+    ]), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────
 # MODULE 6 — 30-DAY ACTION PLAN
 # ─────────────────────────────────────────────────────────────
 
@@ -1405,6 +1572,7 @@ def main():
     render_competitors()
     render_keywords()
     render_ads()
+    render_inventory()
     render_action_plan()
     st.markdown('</div>', unsafe_allow_html=True)
 
