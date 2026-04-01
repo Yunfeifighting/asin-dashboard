@@ -1240,6 +1240,95 @@ def render_inventory():
 
     st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
 
+    # ── DOC Trend Chart ──
+    _past_days = list(range(-30, 1))
+    _past_doc  = [round(48 - (48 - 28) * i / 30, 1) for i in range(31)]
+
+    _fut_days = list(range(0, 31))
+    _fut_doc  = []
+    _s_tmp    = inv["fba_stock"]
+    for _d in _fut_days:
+        if _d == inv["inbound_eta"]:
+            _s_tmp += inv["inbound"]
+        _s_tmp = max(0, _s_tmp - inv["vel_7d"])
+        _fut_doc.append(round(_s_tmp / max(inv["vel_7d"], 1), 1))
+
+    _doc_upper = 60
+    _doc_lower = 30
+
+    fig_doc = go.Figure()
+    fig_doc.add_trace(go.Scatter(
+        x=_past_days, y=_past_doc,
+        name="历史 DOC",
+        line=dict(color="#38bdf8", width=2.5),
+        mode="lines+markers", marker=dict(size=4, color="#38bdf8"),
+        fill="tozeroy", fillcolor="rgba(56,189,248,0.07)",
+    ))
+    fig_doc.add_trace(go.Scatter(
+        x=_fut_days, y=_fut_doc,
+        name="预测 DOC（含在途）",
+        line=dict(color="#a78bfa", width=2.5, dash="dot"),
+        mode="lines+markers", marker=dict(size=4, color="#a78bfa", symbol="diamond"),
+    ))
+    fig_doc.add_hline(
+        y=_doc_upper, line_dash="dash", line_color="#f59e0b", line_width=1.5,
+        annotation_text="⚠ 滞销警戜线 (DOC>60天)",
+        annotation_position="top right",
+        annotation_font=dict(color="#f59e0b", size=10),
+    )
+    fig_doc.add_hline(
+        y=_doc_lower, line_dash="dash", line_color="#ef4444", line_width=1.5,
+        annotation_text="⚠ 补货警戜线 (DOC<30天)",
+        annotation_position="bottom right",
+        annotation_font=dict(color="#ef4444", size=10),
+    )
+    fig_doc.add_hrect(y0=0,          y1=_doc_lower,
+                      fillcolor="rgba(239,68,68,0.08)",  line_width=0, layer="below")
+    fig_doc.add_hrect(y0=_doc_upper, y1=_doc_upper + 30,
+                      fillcolor="rgba(245,158,11,0.08)", line_width=0, layer="below")
+    fig_doc.add_vline(
+        x=0, line_dash="solid", line_color="#475569", line_width=1,
+        annotation_text="今日", annotation_position="top",
+        annotation_font=dict(color="#94a3b8", size=9),
+    )
+    fig_doc.add_vline(
+        x=inv["inbound_eta"], line_dash="dot", line_color="#a78bfa", line_width=1.5,
+        annotation_text=f"在途到货 Day {inv['inbound_eta']}",
+        annotation_position="top left",
+        annotation_font=dict(color="#a78bfa", size=9),
+    )
+    fig_doc.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,23,42,0.5)",
+        font=dict(color="#e2e8f0", size=10),
+        height=300, margin=dict(l=10, r=170, t=45, b=30),
+        title=dict(
+            text="📈 DOC (Days of Cover) 趋势 — 历史30天 + 未来天预测",
+            font=dict(size=12, color="#e2e8f0"), x=0,
+        ),
+        legend=dict(
+            font=dict(size=9, color="#e2e8f0"), bgcolor="rgba(15,23,42,0.9)",
+            bordercolor="#334155", borderwidth=1,
+            orientation="h", x=0, y=-0.22,
+        ),
+        xaxis=dict(
+            title="天数（负=过去，正=未来）",
+            title_font=dict(size=9, color="#94a3b8"),
+            tickfont=dict(size=9, color="#94a3b8"),
+            gridcolor="#1e293b", linecolor="#475569",
+            zeroline=True, zerolinecolor="#64748b", zerolinewidth=1.5,
+        ),
+        yaxis=dict(
+            title="DOC (可售天数)",
+            title_font=dict(size=9, color="#94a3b8"),
+            tickfont=dict(size=9, color="#94a3b8"),
+            gridcolor="#1e293b", linecolor="#475569", rangemode="tozero",
+        ),
+        hoverlabel=dict(bgcolor="#1e293b", bordercolor="#334155",
+                        font=dict(color="#e2e8f0", size=11)),
+    )
+    st.plotly_chart(fig_doc, use_container_width=True, config=plotly_cfg())
+
+
     # ── SKU Table ──
     trows = ""
     for s in sku_rows:
